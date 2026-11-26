@@ -9,8 +9,8 @@ import {
   ThreadPrimitive,
   useLocalRuntime,
 } from "@assistant-ui/react";
-import { mockRobinAdapter } from "./mockAdapter.js";
-import { createRobinAdapter, robinFeedbackAdapter } from "./robinAdapter.js";
+import { mockPennyAdapter } from "./mockAdapter.js";
+import { createPennyAdapter, pennyFeedbackAdapter } from "./pennyAdapter.js";
 
 // Build with VITE_MOCK=1 for a preview with scripted answers; the normal build talks to /api/chat.
 export const MOCK = import.meta.env.VITE_MOCK === "1";
@@ -21,20 +21,20 @@ const WELCOME = [
     content: [
       {
         type: "text",
-        text: "Hi, I'm Robin from Nest & Co customer service. I can help with orders, returns and complaints. What can I do for you?",
+        text: "Hi, I'm Penny. I know the 1Password writing style guide. Ask me how to write something, or paste copy for a review.",
       },
     ],
   },
 ];
 
 const SUGGESTIONS = [
-  "Can I still return a vase after 5 weeks?",
-  "My made-to-measure curtains arrived damaged",
-  "My delivery is late again. I want a voucher!",
-  "Ik wil mijn bestelling retourneren",
+  "Should I write \"sign in\" or \"log in\"?",
+  "Review: \"Oops! We couldn't save your item. Please try again.\"",
+  "Can I use an em dash?",
+  "How do I write about passkeys?",
 ];
 
-function RobinAvatar({ size }) {
+function PennyAvatar({ size }) {
   return (
     <span className={`avatar avatar--${size}`} aria-hidden="true">
       <svg viewBox="0 0 32 32">
@@ -102,15 +102,15 @@ function UserMessage() {
 
 function AssistantMessage() {
   return (
-    <MessagePrimitive.Root className="msg msg--robin">
-      <RobinAvatar size="sm" />
+    <MessagePrimitive.Root className="msg msg--penny">
+      <PennyAvatar size="sm" />
       <div className="msg__body">
         <AuiIf condition={(s) => s.message.metadata?.custom?.masked === true}>
           <p className="guard-note">
-            {Icon.shield} Your bank account number was removed before your message was sent.
+            {Icon.shield} A bank account number was removed before your message was sent.
           </p>
         </AuiIf>
-        <div className="bubble bubble--robin">
+        <div className="bubble bubble--penny">
           <MessagePrimitive.Parts />
         </div>
         <AuiIf condition={(s) => s.message.index > 0}>
@@ -133,10 +133,10 @@ function AssistantMessage() {
 
 function Typing() {
   return (
-    <div className="msg msg--robin" aria-live="polite">
-      <RobinAvatar size="sm" />
-      <div className="bubble bubble--robin typing">
-        <span className="sr-only">Robin is typing</span>
+    <div className="msg msg--penny" aria-live="polite">
+      <PennyAvatar size="sm" />
+      <div className="bubble bubble--penny typing">
+        <span className="sr-only">Penny is typing</span>
         <i />
         <i />
         <i />
@@ -145,15 +145,15 @@ function Typing() {
   );
 }
 
-function RobinThread({ onNewConversation }) {
+function PennyThread({ onNewConversation }) {
   return (
     <ThreadPrimitive.Root className="thread">
       <header className="thread__header">
-        <RobinAvatar size="lg" />
+        <PennyAvatar size="lg" />
         <div className="thread__title">
-          <strong>Robin</strong>
+          <strong>Penny</strong>
           <span>
-            <i className="online-dot" aria-hidden="true" /> Nest & Co customer service
+            <i className="online-dot" aria-hidden="true" /> 1Password writing style
           </span>
         </div>
         <button type="button" className="icon-btn" aria-label="New conversation" title="New conversation" onClick={onNewConversation}>
@@ -186,28 +186,28 @@ function RobinThread({ onNewConversation }) {
       </ThreadPrimitive.Viewport>
 
       <ComposerPrimitive.Root className="composer">
-        <ComposerPrimitive.Input className="composer__input" placeholder="Type your message…" rows={1} aria-label="Message to Robin" />
+        <ComposerPrimitive.Input className="composer__input" placeholder="Ask a question or paste copy…" rows={1} aria-label="Message to Penny" />
         <ComposerPrimitive.Send className="composer__send" aria-label="Send">
           {Icon.send}
         </ComposerPrimitive.Send>
       </ComposerPrimitive.Root>
       <p className="thread__note">
-        Robin is an AI assistant and can make mistakes. Please don't share personal details.
+        Penny is an AI assistant and can make mistakes. Don't paste passwords, secrets, or personal details.
         {MOCK && <span className="mock-tag">Preview · scripted answers</span>}
       </p>
     </ThreadPrimitive.Root>
   );
 }
 
-export default function RobinWidget({ open, onOpenChange, onNewConversation, settings }) {
+export default function PennyWidget({ open, onOpenChange, onNewConversation, settings }) {
   // Settings change while the chat is open; the adapter reads the latest values on every send.
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
-  const adapter = useMemo(() => (MOCK ? mockRobinAdapter : createRobinAdapter(() => settingsRef.current)), []);
+  const adapter = useMemo(() => (MOCK ? mockPennyAdapter : createPennyAdapter(() => settingsRef.current)), []);
   const runtime = useLocalRuntime(adapter, {
     initialMessages: WELCOME,
-    adapters: { feedback: MOCK ? { submit: () => {} } : robinFeedbackAdapter },
+    adapters: { feedback: MOCK ? { submit: () => {} } : pennyFeedbackAdapter },
   });
 
   return (
@@ -215,9 +215,9 @@ export default function RobinWidget({ open, onOpenChange, onNewConversation, set
       <AssistantModalPrimitive.Root open={open} onOpenChange={onOpenChange} unstable_openOnRunStart={false}>
         <AssistantModalPrimitive.Anchor className="launcher-anchor">
           <div className="launcher-teaser" aria-hidden="true">
-            Questions about a return? <b>Ask Robin</b>
+            Style question? <b>Ask Penny</b>
           </div>
-          <AssistantModalPrimitive.Trigger className="launcher" aria-label="Chat with Robin">
+          <AssistantModalPrimitive.Trigger className="launcher" aria-label="Chat with Penny">
             <span className="launcher__open">{Icon.chat}</span>
             <span className="launcher__close">{Icon.close}</span>
           </AssistantModalPrimitive.Trigger>
@@ -230,7 +230,7 @@ export default function RobinWidget({ open, onOpenChange, onNewConversation, set
           onOpenAutoFocus={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
         >
-          <RobinThread onNewConversation={onNewConversation} />
+          <PennyThread onNewConversation={onNewConversation} />
         </AssistantModalPrimitive.Content>
       </AssistantModalPrimitive.Root>
     </AssistantRuntimeProvider>

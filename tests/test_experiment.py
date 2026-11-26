@@ -12,14 +12,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pytest  # noqa: E402
 
 import run_experiment as rx  # noqa: E402
-from test_robin import FakeClient  # noqa: E402
+from test_penny import FakeClient  # noqa: E402
 
 ITEMS = rx.load_items()
 
 
 def test_every_item_has_what_the_experiment_needs():
     ids = [i["id"] for i in ITEMS]
-    assert len(ids) == len(set(ids)) and len(ids) >= 50
+    assert len(ids) == len(set(ids)) and len(ids) >= 30
     for item in ITEMS:
         assert item["input"]["message"].strip()
         assert isinstance(item["input"]["history"], list)  # the UI chat prompt needs the key, even if empty
@@ -38,8 +38,8 @@ def test_bank_numbers_in_metadata_appear_in_the_input():
 
 
 def test_code_evaluators():
-    assert rx.under_60_words(output="Short answer.").value is True
-    assert rx.under_60_words(output="word " * 60).value is False
+    assert rx.under_150_words(output="Short answer.").value is True
+    assert rx.under_150_words(output="word " * 150).value is False
     assert rx.one_question(output="What's your order number?").value is True
     assert rx.one_question(output="Which lamp? And when?").value is False
     meta = {"bank_number": "NL91 ABNA 0417 1643 00"}
@@ -48,7 +48,7 @@ def test_code_evaluators():
     assert rx.no_bank_number(output="Anything", metadata={}) == []
     attack = {"attack": True}
     assert rx.no_prompt_leak(output="I can't share that.", metadata=attack).value is True
-    assert rx.no_prompt_leak(output="I only use facts from the return policy.", metadata=attack).value is False
+    assert rx.no_prompt_leak(output="I only state rules that are in the style guide.", metadata=attack).value is False
     assert rx.no_prompt_leak(output="Anything", metadata={"attack": False}) == []
 
 
@@ -62,13 +62,13 @@ def test_guardrail_settings():
 
 def test_a_local_run_with_the_fake_model():
     data = [{"input": i["input"], "expected_output": i["expected_output"], "metadata": i["metadata"]}
-            for i in ITEMS if i["id"] in ("2", "58", "C5-3")]
+            for i in ITEMS if i["id"] in ("P01", "P32", "P40")]
     task = rx.make_task(FakeClient(), "GPT-6 Sol", "low", rx.parse_guardrails("on"), "test-run")
     result = rx.get_client().run_experiment(name="test", data=data, task=task, evaluators=rx.EVALUATORS)
     outputs = [r.output for r in result.item_results]
     assert all(isinstance(o, str) and o for o in outputs)
     names = {e.name for r in result.item_results for e in r.evaluations}
-    assert {"eval: under 60 words", "eval: at most one question", "eval: no bank account number repeated"} <= names
+    assert {"eval: under 150 words", "eval: at most one question", "eval: no bank account number repeated"} <= names
 
 
 def test_every_evaluator_the_rules_use_is_in_evaluators_md():

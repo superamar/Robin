@@ -1,9 +1,9 @@
-# Runs Robin on the experiment dataset in Langfuse (experiments/run_experiment.py).
-# Start it under Actions > "Run Robin experiment" > Run workflow.
+# Runs Penny on the experiment dataset in Langfuse (experiments/run_experiment.py).
+# Start it under Actions > "Run Penny experiment" > Run workflow.
 # Needs three repository secrets (Settings > Secrets and variables > Actions):
 #   OPENAI_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
 # and optionally the variable LANGFUSE_BASE_URL (default: the EU region, https://cloud.langfuse.com).
-name: Run Robin experiment
+name: Run Penny experiment
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ on:
           - "one run"
           - "comparison: both models, guardrails on and off"
       model:
-        description: "Robin's model (for one run)"
+        description: "Penny's model (for one run)"
         type: choice
         default: "GPT-6 Sol"
         options: ["GPT-6 Sol", "GPT-4.1 mini"]
@@ -32,7 +32,7 @@ on:
       user:
         description: "User name shown in Langfuse"
         type: string
-        default: "Maaike"
+        default: "experiment"
 
 permissions:
   contents: read

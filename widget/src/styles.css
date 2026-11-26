@@ -1,4 +1,4 @@
-/* Layout: a calm shop page; the chat widget is the one strong element, bottom right. Single light theme by choice. */
+/* Layout: a calm landing page; the chat widget is the one strong element, bottom right. Single light theme by choice. */
 :root {
   --paper: #f2f3ee;      /* page: pale sage-grey */
   --card: #fbfbf8;
@@ -13,7 +13,7 @@
   --oak: #b88a55;
   --fog: #dfe3dc;
   --bubble-user: #2f4b3b;
-  --bubble-robin: #ffffff;
+  --bubble-penny: #ffffff;
   --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
   color-scheme: light;
@@ -37,7 +37,7 @@ a { color: inherit; }
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
-/* ---------- Shop ---------- */
+/* ---------- Page ---------- */
 .demo-bar {
   background: var(--fir-dark);
   color: #e9eee8;
@@ -147,7 +147,7 @@ a { color: inherit; }
   .site-header { justify-content: space-between; }
 }
 
-/* ---------- Robin widget ---------- */
+/* ---------- Penny widget ---------- */
 .launcher-anchor {
   position: fixed;
   right: max(20px, env(safe-area-inset-right, 0px));
@@ -235,7 +235,7 @@ a { color: inherit; }
 .bubble { padding: 10px 14px; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
 .bubble p { margin: 0; }
 .bubble--user { background: var(--bubble-user); color: #fff; border-radius: 18px 18px 4px 18px; max-width: 82%; }
-.bubble--robin { background: var(--bubble-robin); color: var(--ink); border: 1px solid var(--line); border-radius: 4px 18px 18px 18px; }
+.bubble--penny { background: var(--bubble-penny); color: var(--ink); border: 1px solid var(--line); border-radius: 4px 18px 18px 18px; }
 
 .actions { display: flex; gap: 2px; padding-left: 4px; }
 .action { width: 28px; height: 28px; border: 0; background: transparent; border-radius: 8px; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
@@ -301,8 +301,8 @@ a { color: inherit; }
   .panel { width: calc(100vw - 40px); height: calc(100dvh - 110px); }
 }
 
-/* ---------- Course settings (outside the chatbot, so the widget stays a real customer widget) ---------- */
-.course {
+/* ---------- Settings panel (outside the chatbot, so the widget stays a real chat widget) ---------- */
+.settings {
   position: fixed;
   left: max(16px, env(safe-area-inset-left, 0px));
   bottom: max(16px, env(safe-area-inset-bottom, 0px));
@@ -314,7 +314,7 @@ a { color: inherit; }
   z-index: 40;
   font-size: 14px;
 }
-.course__toggle {
+.settings__toggle {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -326,10 +326,10 @@ a { color: inherit; }
   color: var(--fir);
   cursor: pointer;
 }
-.course__body { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 14px; max-height: calc(100dvh - 150px); overflow-y: auto; }
-.course label { display: flex; flex-direction: column; gap: 4px; color: var(--ink); font-weight: 700; font-size: 13px; }
-.course small { font-weight: 400; color: var(--muted); font-size: 12px; }
-.course input, .course select {
+.settings__body { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 14px; max-height: calc(100dvh - 150px); overflow-y: auto; }
+.settings label { display: flex; flex-direction: column; gap: 4px; color: var(--ink); font-weight: 700; font-size: 13px; }
+.settings small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.settings input, .settings select {
   font: inherit;
   font-weight: 400;
   font-size: 14px;
@@ -340,18 +340,23 @@ a { color: inherit; }
   color: var(--ink);
   min-width: 0;
 }
-.course__row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.course__mock { margin: 0; font-size: 12px; color: var(--muted); }
-.course__guards { border: 0; border-top: 1px solid var(--line); margin: 2px 0 0; padding: 10px 0 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.course__guards legend { font-weight: 700; font-size: 13px; color: var(--ink); padding: 0; }
-.course .course__check { flex-direction: row; align-items: flex-start; gap: 8px; font-weight: 400; font-size: 13px; cursor: pointer; }
-.course__check input { width: 16px; height: 16px; margin: 2px 0 0; padding: 0; accent-color: var(--fir); flex: none; }
-.course__check span { display: flex; flex-direction: column; gap: 2px; }
-.course__check small { color: var(--clay-ink, #8a3b1f); }
-.course__hint { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.settings__row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.settings__mock { margin: 0; font-size: 12px; color: var(--muted); }
+.settings__guards { border: 0; border-top: 1px solid var(--line); margin: 2px 0 0; padding: 10px 0 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.settings__guards legend { font-weight: 700; font-size: 13px; color: var(--ink); padding: 0; }
+.settings .settings__check { flex-direction: row; align-items: flex-start; gap: 8px; font-weight: 400; font-size: 13px; cursor: pointer; }
+.settings__check input { width: 16px; height: 16px; margin: 2px 0 0; padding: 0; accent-color: var(--fir); flex: none; }
+.settings__check span { display: flex; flex-direction: column; gap: 2px; }
+.settings__check small { color: var(--clay-ink, #8a3b1f); }
+.settings__hint { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
 .guard-note { display: flex; gap: 6px; align-items: center; margin: 0; font-size: 12px; color: var(--fir); background: var(--fog); border-radius: 8px; padding: 5px 8px; }
 .guard-note svg { width: 14px; height: 14px; flex: none; }
 @media (max-width: 860px) {
-  .course { width: auto; right: 92px; }
-  .course--collapsed { right: auto; }
+  .settings { width: auto; right: 92px; }
+  .settings--collapsed { right: auto; }
 }
+
+/* ---------- Penny's landing page ---------- */
+.hero--penny { grid-template-columns: 1fr; }
+button.btn { border: 0; cursor: pointer; font: inherit; }
+.help__more a { color: var(--fir); }

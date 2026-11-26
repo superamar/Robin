@@ -1,9 +1,9 @@
 ---
-name: robin-conversation-design-review
-description: "Review a conversation flow, system prompt, or transcript against conversation-design fundamentals — clarity (Grice's maxims), repair (can the user recover when misunderstood), one-question-at-a-time, tone and empathy — and return a structured critique with concrete rewrites for the worst issues, not a generic checklist pass. Triggers: '/robin-conversation-design-review', 'review this flow', 'review this system prompt', 'critique this conversation design'."
+name: penny-conversation-design-review
+description: "Review a conversation flow, system prompt, or transcript against conversation-design fundamentals — clarity (Grice's maxims), repair (can the user recover when misunderstood), one-question-at-a-time, tone and empathy — and return a structured critique with concrete rewrites for the worst issues, not a generic checklist pass. Triggers: '/penny-conversation-design-review', 'review this flow', 'review this system prompt', 'critique this conversation design'."
 ---
 
-# robin-conversation-design-review — structured critique against conversation-design fundamentals
+# penny-conversation-design-review — structured critique against conversation-design fundamentals
 
 Given a system prompt, a flow description, or a transcript (pasted, or a file path), review it
 against four lenses. Don't just confirm each lens is "fine" — find the two or three things that
@@ -24,7 +24,7 @@ would actually change the experience if fixed, and say nothing useful about the 
 3. **One question at a time.** Does a single turn ask multiple things at once, or offer so many
    options the user has to re-read it twice? Count actual question marks and decision points per
    turn, don't eyeball it.
-4. **Tone and empathy.** Does the register match the situation — calm with an angry customer,
+4. **Tone and empathy.** Does the register match the situation — calm with a frustrated person,
    brief for a quick lookup, more careful for anything involving money or safety? Is the persona
    consistent, or does it slip between registers turn to turn? A tone that's technically polite
    but doesn't acknowledge frustration is a real finding, not a nitpick.
@@ -36,7 +36,7 @@ would actually change the experience if fixed, and say nothing useful about the 
   the model actually imitates.
 - A flow with a guardrail that blocks input but gives no next step is a repair failure even if
   the block itself is correct.
-- Robin's own `prompts.py` in this repo is a reasonable in-repo reference for what a tight,
+- Penny's own `prompts.py` in this repo is a reasonable in-repo reference for what a tight,
   single-purpose system prompt looks like — useful for comparison, not something to assume is
   perfect.
 

@@ -1,4 +1,4 @@
-"""Robin's API for Vercel: the chat widget (public/index.html) sends each message here.
+"""Penny's API for Vercel: the chat widget (public/index.html) sends each message here.
 
 Vercel runs this file as a function: every request starts, runs and stops. That's why the
 conversation lives in the browser, and why every request ends with flushing the traces to Langfuse.
@@ -11,20 +11,20 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()  # for local runs; on Vercel, keys come from the project's environment variables
-os.environ.setdefault("LANGFUSE_TRACING_ENVIRONMENT", "course")
+os.environ.setdefault("LANGFUSE_TRACING_ENVIRONMENT", "pilot")
 
 from flask import Flask, jsonify, request, send_file  # noqa: E402
 from langfuse import get_client  # noqa: E402
 from openai import OpenAI  # noqa: E402
 
 import help_pages  # noqa: E402
-import robin  # noqa: E402
+import penny  # noqa: E402
 
 app = Flask(__name__)
-log = logging.getLogger("robin")
+log = logging.getLogger("penny")
 
 client = OpenAI()
-COURSE_PASSCODE = os.getenv("COURSE_PASSCODE", "")
+ACCESS_PASSCODE = os.getenv("ACCESS_PASSCODE", "")
 MAX_MESSAGES = int(os.getenv("MAX_MESSAGES_PER_CHAT", "40"))
 MAX_MESSAGE_LENGTH = 2000
 MAX_HISTORY_ITEMS = 2 * MAX_MESSAGES + 1
@@ -44,7 +44,7 @@ def chat():
         name = str(data.get("name") or "").strip()[:60]
         history = data.get("history") or []
 
-        if COURSE_PASSCODE and data.get("passcode") != COURSE_PASSCODE:
+        if ACCESS_PASSCODE and data.get("passcode") != ACCESS_PASSCODE:
             return _error("passcode", 403)
         if not name:
             return _error("name", 400)
@@ -55,18 +55,18 @@ def chat():
         if sum(1 for item in history if isinstance(item, dict) and item.get("role") == "user") >= MAX_MESSAGES:
             return _error("limit", 400)
 
-        result = robin.handle_turn(
+        result = penny.handle_turn(
             message,
             [item for item in history if isinstance(item, dict)],
             client=client,
-            robin_model_label=str(data.get("model") or "GPT-6 Sol"),
+            penny_model_label=str(data.get("model") or "GPT-6 Sol"),
             reasoning_effort=str(data.get("effort") or "medium"),
             participant=name,
             session_id=str(data.get("session_id") or "no-session")[:100],
             guardrails=data.get("guardrails"),  # e.g. {"facts": false}; anything missing stays on
-            look_up=data.get("look_up") is True,  # off unless the course panel switches it on
+            look_up=data.get("look_up") is True,  # off unless the settings panel switches it on
             max_results=data.get("max_results"),
-            label=data.get("prompt_label"),  # a student's own version of the system prompt; empty = production
+            label=data.get("prompt_label"),  # your own version of the system prompt; empty = production
         )
         return jsonify({
             "answer": result.answer,
@@ -88,7 +88,7 @@ def feedback():
         data = request.get_json(silent=True) or {}
         trace_id = str(data.get("trace_id") or "")
         if trace_id:
-            robin.record_feedback(trace_id, bool(data.get("liked")))
+            penny.record_feedback(trace_id, bool(data.get("liked")))
         return jsonify({"ok": True})
     except Exception:
         log.exception("feedback request failed")
@@ -101,11 +101,11 @@ def feedback():
 def chunks():
     """The chunks in the content database, for the 'Content database' page (behind the passcode)."""
     data = request.get_json(silent=True) or {}
-    if COURSE_PASSCODE and data.get("passcode") != COURSE_PASSCODE:
+    if ACCESS_PASSCODE and data.get("passcode") != ACCESS_PASSCODE:
         return _error("passcode", 403)
     try:
-        return jsonify({"chunks": robin.lookup.list_chunks()})
-    except robin.lookup.LookUpError as error:
+        return jsonify({"chunks": penny.lookup.list_chunks()})
+    except penny.lookup.LookUpError as error:
         return jsonify({"error": "no_database", "message": str(error)}), 503
     except Exception:
         log.exception("listing the chunks failed")
@@ -134,7 +134,7 @@ def index():
     # On Vercel, the CDN normally serves public/index.html itself. This route covers local runs.
     if INDEX_HTML.exists():
         return send_file(INDEX_HTML)
-    return "Robin's API is running. The chat page is in public/index.html.", 200
+    return "Penny's API is running. The chat page is in public/index.html.", 200
 
 
 if __name__ == "__main__":

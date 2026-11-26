@@ -1,27 +1,34 @@
-# Robin — backlog
+# Penny — backlog
 
 Simple backlog for this repo: Open → In progress → Done. Edit by hand or via the
-`robin-backlog` skill (`/robin-backlog`).
+`penny-backlog` skill (`/penny-backlog`).
 
 ## Open
 
-- **Fix the handbook's free-shipping inconsistency.** `content/handbook.md` (and the matching
-  `robin/handbook` prompt in Langfuse) says "Free shipping on all orders from €50!" in Ordering
-  and payment, but €75 in Delivery. The changelog shows the threshold was raised in v3.2 but the
-  Ordering section's teaser line was never updated.
-- **Give Robin a real escalation path.** When a customer insists on a human (seen for real in the
-  traces — "I need to talk with a human agent" x3), Robin has no contact info to offer: the
-  default system prompt only injects `RETURN_POLICY`, not Customer Care's hours/channel.
+- **Swap in the team's own chunked style guide.** `content/style-guide.md` is a condensed version
+  of the public guide (voice, mechanics, terminology). Replace it with the real chunked documents,
+  update `penny/style-essentials` to match, and regenerate the test set
+  (`/penny-test-case-generator`).
+- **Fetch the full public style guide.** support.1password.com is blocked in the cloud session
+  where Penny was adapted, so the starter content came from a condensed reference. Either allow
+  the host, or paste the guide in, to fill the gaps.
+- **Decide hosting with engineering: AWS Bedrock or not.** The seams are `lookup.py`
+  (`embed()`, `search()`), `ingestion/ingest_style_guide.py`, and `penny.py` (`_chat()`). See
+  README → "Moving to AWS Bedrock". Also decide Langfuse Cloud vs self-hosted.
+- **Replace the bank account guardrail with a secrets guardrail.** Inherited from Robin. People
+  pasting 1Password copy are more likely to paste a real password, Secret Key or API token than
+  an IBAN. Keep it a deterministic pattern check, before anything is traced.
+- **Let Penny cite its sources.** With look-up on, Penny knows which sections it used. Each
+  section has a link (`/help/style-guide#<section>`): add it to the answer.
+- **Make the facts-check judge eval look-up aware.** `eval: only rules from the style guide` only
+  knows the style essentials, so it can mark correct look-up answers as wrong.
+- **Check with legal and security what copy can be pasted** (unreleased features, customer data)
+  before a wider rollout: everything goes to OpenAI and Langfuse.
 - **Add English language to the PO/CxD dashboard** (`dashboard-kit/`, currently Dutch-only UI).
-  Planned as a live-coding demo.
-- **Add an evals dashboard to the PO/CxD dashboard** (`dashboard-kit/`) — per-evaluator pass rate
-  across experiment runs, filterable by model and guardrail setting.
-- **Migrate `dashboard-kit/robin_adapter.py` off the deprecated Langfuse endpoints**
+- **Migrate `dashboard-kit/penny_adapter.py` off the deprecated Langfuse endpoints**
   (`/api/public/traces`, `/api/public/scores`) to `/api/public/v2/observations` and
-  `/api/public/v3/scores` before Langfuse actually removes the old ones.
-- **Decide what happens to the Beoordeling (review) panel in `thread-view/`.** It's UI-only right
-  now — toggles don't persist. Either wire it to something, or keep it as a teaching mockup and
-  say so clearly.
+  `/api/public/v3/scores` before Langfuse removes the old ones.
+- **Move to the work repo** when the content and hosting decisions are made.
 
 ## In progress
 
@@ -29,10 +36,6 @@ Simple backlog for this repo: Open → In progress → Done. Edit by hand or via
 
 ## Done
 
-- Cloned the repo locally, wired up `.env`, confirmed Langfuse tracing end to end.
-- Connected the real Render Postgres for look-up (RAG); ran the ingestion pipeline.
-- Ran the 51-item experiment set with look-up on, guardrails on and off.
-- Built `dashboard-kit/`: Product Owner + conversation-log dashboard adapted from the Montferland
-  dashboard-kit, with inline-expanding rows, an `@assistant-ui/react` thread view, and a
-  Bronnen/Beoordeling panel matching the Waddinxveen reference.
-- Added the `robin-dashboard` skill to launch it on demand.
+- Adapted Robin (the Nest & Co customer service teaching bot) into Penny, a 1Password writing
+  style assistant: new prompts, starter style guide content, landing page and chat widget,
+  41-item test set, judge prompts, dashboard topics, docs and skills.

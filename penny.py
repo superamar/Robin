@@ -1,18 +1,18 @@
-"""Robin's brain: one customer message in, one answer out, with guardrails and a readable Langfuse trace.
+"""Penny's brain: one message in, one answer out, with guardrails and a readable Langfuse trace.
 
-Every customer message becomes ONE trace in Langfuse, with these steps inside it:
+Every message becomes ONE trace in Langfuse, with these steps inside it:
 
-    Robin – chat turn                                    (the whole turn: customer message in, answer out)
+    Penny – chat turn                                    (the whole turn: message in, answer out)
     ├── 1. Input guardrail – bank account numbers       (no LLM: a pattern check)
     ├── 2. Input guardrail – prompt injection            (small model)
     │   └── Injection check (small model)
-    ├── 3. Robin writes the answer                      (the LLM call with the system prompt)
+    ├── 3. Penny writes the answer                      (the LLM call with the system prompt)
     ├── 4. Output guardrail – facts check                (small model)
     │   └── Facts check (small model)
     └── 5. and 6.: only if the facts check blocked the first answer (a rewrite, then a second check)
 
-With "Look things up" switched on in the course panel, Robin works like a RAG bot: instead of the whole
-return policy, it gets the handbook sections that match the question. Two steps appear before step 3:
+With "Look things up" switched on in the settings panel, Penny works like a RAG bot: instead of the short
+style essentials, it gets the style guide sections that match the question. Two steps appear before step 3:
 
     ├── Look-up 1 – rewrite the question into a search query   (small model)
     ├── Look-up 2 – search the content database                (embeddings, see lookup.py)
@@ -21,8 +21,8 @@ return policy, it gets the handbook sections that match the question. Two steps 
 Each guardrail step carries its own score (`guardrail: ...`), so clicking a step shows its result on
 its Scores tab. The `outcome` and `user feedback` scores belong to the whole turn.
 
-Each guardrail can be switched off in the course panel. A switched-off guardrail doesn't appear in the
-tree and gets no score; the turn's metadata and tags say it was off. With all three off, Robin runs on the system
+Each guardrail can be switched off in the settings panel. A switched-off guardrail doesn't appear in the
+tree and gets no score; the turn's metadata and tags say it was off. With all three off, Penny runs on the system
 prompt alone, and the trace shows only step 3.
 
 All turns of one chat share a session ID, so the Sessions view in Langfuse shows the whole conversation.
@@ -42,18 +42,18 @@ from langfuse.api import NotFoundError
 import lookup
 import prompts
 
-APP_VERSION = "robin-v2"
+APP_VERSION = "penny-v2"
 
 # Model names come from environment variables, so you can change them without editing code.
-ROBIN_MODELS = {
-    "GPT-6 Sol": os.getenv("ROBIN_MODEL", "gpt-6-sol"),
+PENNY_MODELS = {
+    "GPT-6 Sol": os.getenv("PENNY_MODEL", "gpt-6-sol"),
     "GPT-4.1 mini": os.getenv("COMPARE_MODEL", "gpt-4.1-mini"),
 }
-REASONING_MODELS = {os.getenv("ROBIN_MODEL", "gpt-6-sol")}  # models that accept reasoning_effort
+REASONING_MODELS = {os.getenv("PENNY_MODEL", "gpt-6-sol")}  # models that accept reasoning_effort
 GUARDRAIL_MODEL = os.getenv("GUARDRAIL_MODEL", "gpt-6-luna")
 GUARDRAIL_EFFORT = os.getenv("GUARDRAIL_EFFORT", "low")
 
-# The guardrails that can be switched off in the course panel, with the names shown in Langfuse.
+# The guardrails that can be switched off in the settings panel, with the names shown in Langfuse.
 GUARDRAILS = {
     "bank_account": "bank account numbers",
     "injection": "prompt injection",
@@ -103,12 +103,12 @@ def mask_bank_accounts(text: str) -> tuple[str, int]:
 # Prompts from Langfuse (Prompt Management), with the texts in prompts.py as a fallback
 # ---------------------------------------------------------------------------
 
-log = logging.getLogger("robin")
+log = logging.getLogger("penny")
 _prompts_seeded = False
 
 
 def seed_prompts() -> None:
-    """The first time Robin runs, copy any prompt that's missing in Langfuse from prompts.py.
+    """The first time Penny runs, copy any prompt that's missing in Langfuse from prompts.py.
 
     Existing prompts are never overwritten, so edits you make in Langfuse are kept.
     """
@@ -124,8 +124,8 @@ def seed_prompts() -> None:
             langfuse.get_prompt(name, label="production", cache_ttl_seconds=0, max_retries=0, fetch_timeout_seconds=5)
         except NotFoundError:
             try:
-                langfuse.create_prompt(name=name, prompt=text, labels=["production"], tags=["robin"],
-                                       commit_message="Robin's starting version, from prompts.py")
+                langfuse.create_prompt(name=name, prompt=text, labels=["production"], tags=["penny"],
+                                       commit_message="Penny's starting version, from prompts.py")
             except Exception:
                 log.exception("could not create prompt %s in Langfuse", name)
         except Exception:
@@ -133,7 +133,7 @@ def seed_prompts() -> None:
 
 
 def prompt_label(value) -> str | None:
-    """A student's own prompt label from the course panel, cleaned up. None means: use production."""
+    """Your own prompt label from the settings panel, cleaned up. None means: use production."""
     label = re.sub(r"[^a-z0-9_.-]", "", str(value or "").strip().lower())[:36]
     return label if label and label != "production" else None
 
@@ -141,7 +141,7 @@ def prompt_label(value) -> str | None:
 def _prompt(name: str, label: str | None = None):
     """Get a prompt from Langfuse, or the local text if that fails.
 
-    With a label (a student's own version, set in the course panel), Robin first looks for that label
+    With a label (your own version, set in the settings panel), Penny first looks for that label
     and falls back to 'production' if the label doesn't exist on this prompt.
     """
     if label:
@@ -167,7 +167,7 @@ def _text(name: str, label: str | None = None, **values: str) -> tuple[str, obje
 
 
 def _label_used(link, requested: str | None) -> str:
-    """What to show in the trace about the prompt version Robin used."""
+    """What to show in the trace about the prompt version Penny used."""
     labels = list(getattr(link, "labels", None) or [])
     version = getattr(link, "version", None)
     where = f"version {version}" if version else "local text"
@@ -197,24 +197,24 @@ STEPS = {
              "what_it_does": "Removes bank account numbers before the message goes anywhere.",
              "if_it_fails": "not applicable: it's a rule, not a model"},
     "injection": {"layer": "input guardrail", "uses_llm": "yes: the small model",
-                  "what_it_does": "Checks whether the customer tries to make Robin ignore its instructions.",
-                  "if_it_fails": "fail open: the message goes through to Robin"},
-    "answer": {"layer": "LLM call", "uses_llm": "yes: Robin's model",
-               "what_it_does": "Robin writes an answer, using the system prompt and the conversation so far."},
-    "retry": {"layer": "LLM call", "uses_llm": "yes: Robin's model",
-              "what_it_does": "Robin rewrites the answer, because the facts check found unsupported statements."},
+                  "what_it_does": "Checks whether the person tries to make Penny ignore its instructions.",
+                  "if_it_fails": "fail open: the message goes through to Penny"},
+    "answer": {"layer": "LLM call", "uses_llm": "yes: Penny's model",
+               "what_it_does": "Penny writes an answer, using the system prompt and the conversation so far."},
+    "retry": {"layer": "LLM call", "uses_llm": "yes: Penny's model",
+              "what_it_does": "Penny rewrites the answer, because the facts check found unsupported statements."},
     "facts": {"layer": "output guardrail", "uses_llm": "yes: the small model",
-              "what_it_does": "Checks that every fact in Robin's answer is in the return policy.",
+              "what_it_does": "Checks that every fact in Penny's answer is in the style essentials.",
               "if_it_fails": "fail closed: the answer is not sent"},
     "facts_lookup": {"layer": "output guardrail", "uses_llm": "yes: the small model",
-                     "what_it_does": "Checks that every fact in Robin's answer is in the handbook sections it was given.",
+                     "what_it_does": "Checks that every fact in Penny's answer is in the style guide sections it was given.",
                      "if_it_fails": "fail closed: the answer is not sent"},
-    "rewrite": {"layer": "look-up (RAG)", "slide_step": "question recognition", "uses_llm": "yes: the small model",
-                "what_it_does": "Turns the customer's message and the conversation so far into a search query."},
-    "search": {"layer": "look-up (RAG)", "slide_step": "information retrieval",
+    "rewrite": {"layer": "look-up (RAG)", "rag_step": "question recognition", "uses_llm": "yes: the small model",
+                "what_it_does": "Turns the person's message and the conversation so far into a search query."},
+    "search": {"layer": "look-up (RAG)", "rag_step": "information retrieval",
                "uses_llm": "no: an embedding model turns text into numbers",
-               "what_it_does": "Finds the handbook chunks in the content database whose meaning is closest to the search query.",
-               "if_it_fails": "Robin gets no sections, so it should say it doesn't know"},
+               "what_it_does": "Finds the style guide chunks in the content database whose meaning is closest to the search query.",
+               "if_it_fails": "Penny gets no sections, so it should say it doesn't know"},
 }
 
 
@@ -256,8 +256,8 @@ def _clean_history(history: list[dict]) -> list[dict]:
 
 @dataclass
 class TurnResult:
-    answer: str                    # what Robin says to the customer
-    customer_message: str          # the customer's message as stored (bank account numbers masked)
+    answer: str                    # what Penny says to the person
+    customer_message: str          # the person's message as stored (bank account numbers masked)
     masked: bool = False           # True only if a bank account number was removed from THIS message
     trace_id: str | None = None    # to attach thumbs up/down feedback later
     outcome: str = "answered"
@@ -274,7 +274,7 @@ def handle_turn(
     history: list[dict],
     *,
     client,
-    robin_model_label: str = "GPT-6 Sol",
+    penny_model_label: str = "GPT-6 Sol",
     reasoning_effort: str = "medium",
     participant: str = "anonymous",
     session_id: str = "no-session",
@@ -287,17 +287,17 @@ def handle_turn(
     on = guardrail_switches(guardrails)
     switched_off = [label for key, label in GUARDRAILS.items() if not on[key]]
     langfuse = get_client()
-    robin_model = ROBIN_MODELS.get(robin_model_label, ROBIN_MODELS["GPT-6 Sol"])
+    penny_model = PENNY_MODELS.get(penny_model_label, PENNY_MODELS["GPT-6 Sol"])
     look_up = look_up is True
     max_results = lookup.max_results(max_results)
     label = prompt_label(label)
-    if not look_up:  # Robin's original set-up: the whole return policy in the system prompt
-        policy, _ = _text("robin/return-policy")
-        system_prompt, system_link = _text("robin/system-prompt", label, return_policy=policy)
-        facts_prompt, facts_link = _text("robin/facts-check", return_policy=policy)
-        checks = {"facts": (facts_prompt, facts_link), "retry_note": "robin/retry-note", "facts_step": STEPS["facts"]}
-    injection_prompt, injection_link = _text("robin/injection-check")
-    effort = reasoning_effort if robin_model in REASONING_MODELS else None
+    if not look_up:  # Penny's original set-up: the whole style essentials in the system prompt
+        essentials, _ = _text("penny/style-essentials")
+        system_prompt, system_link = _text("penny/system-prompt", label, style_essentials=essentials)
+        facts_prompt, facts_link = _text("penny/facts-check", style_essentials=essentials)
+        checks = {"facts": (facts_prompt, facts_link), "retry_note": "penny/retry-note", "facts_step": STEPS["facts"]}
+    injection_prompt, injection_link = _text("penny/injection-check")
+    effort = reasoning_effort if penny_model in REASONING_MODELS else None
 
     # Guardrail 1 runs BEFORE anything is traced, so bank account numbers never reach Langfuse or OpenAI.
     # Switched off, the message goes to OpenAI and Langfuse exactly as typed.
@@ -311,17 +311,17 @@ def handle_turn(
                      else "guardrails: some off")
 
     with propagate_attributes(
-        trace_name="Robin – chat turn",
+        trace_name="Penny – chat turn",
         session_id=session_id,
         user_id=participant or "anonymous",
-        tags=["robin", f"model: {robin_model}", guardrail_tag, f"look-up: {'on' if look_up else 'off'}",
+        tags=["penny", f"model: {penny_model}", guardrail_tag, f"look-up: {'on' if look_up else 'off'}",
               *([f"prompt label: {label}"] if label else [])],
         version=APP_VERSION,
         # No trace-wide metadata here: Langfuse would copy it onto every step and clutter the
         # Metadata column. The settings go on the turn itself instead (see _finish).
     ):
         with langfuse.start_as_current_observation(
-            as_type="agent", name="Robin – chat turn", input=masked_message
+            as_type="agent", name="Penny – chat turn", input=masked_message
         ) as turn:
             result = TurnResult(answer="", customer_message=masked_message, masked=bank_accounts_found > 0,
                                 trace_id=langfuse.get_current_trace_id())
@@ -330,7 +330,7 @@ def handle_turn(
             result.summary["guardrails_switched_off"] = ", ".join(switched_off) or "none"
             result.summary["look_up"] = f"on, max {max_results} sections" if look_up else "off"
             result.details["settings"] = {
-                "robin_model": robin_model,
+                "penny_model": penny_model,
                 "reasoning_effort": effort or "not used",
                 "guardrail_model": GUARDRAIL_MODEL,
             }
@@ -345,7 +345,7 @@ def handle_turn(
                 injection_result, explanation, language = _injection_step(
                     client, langfuse, masked_message, injection_prompt, injection_link)
             else:
-                injection_result, explanation = "OFF", "Switched off in the course panel."
+                injection_result, explanation = "OFF", "Switched off in the settings panel."
             result.summary["step_2_injection_check"] = injection_result
 
             if injection_result == "BLOCK":
@@ -353,22 +353,22 @@ def handle_turn(
                 result.outcome = "blocked by input guardrail"
                 return _finish(turn, result, facts_result="SKIPPED")
 
-            # --- Look-up (only when switched on): find the handbook sections for this question ---
+            # --- Look-up (only when switched on): find the style guide sections for this question ---
             if look_up:
                 sources = _look_up(client, langfuse, masked_message, history, max_results, result)
-                system_prompt, system_link = _text("robin/system-prompt-lookup", label, sources=sources)
-                facts_prompt, facts_link = _text("robin/facts-check-lookup", sources=sources)
-                checks = {"facts": (facts_prompt, facts_link), "retry_note": "robin/retry-note-lookup",
+                system_prompt, system_link = _text("penny/system-prompt-lookup", label, sources=sources)
+                facts_prompt, facts_link = _text("penny/facts-check-lookup", sources=sources)
+                checks = {"facts": (facts_prompt, facts_link), "retry_note": "penny/retry-note-lookup",
                           "facts_step": STEPS["facts_lookup"]}
 
             result.summary["system_prompt_used"] = _label_used(system_link, label)
 
-            # --- 3. Robin's answer -------------------------------------------------------
+            # --- 3. Penny's answer -------------------------------------------------------
             messages = [{"role": "system", "content": system_prompt},
                         *_clean_history(history),
                         {"role": "user", "content": masked_message}]
             try:
-                draft = _chat(client, name="3. Robin writes the answer", model=robin_model,
+                draft = _chat(client, name="3. Penny writes the answer", model=penny_model,
                               effort=effort, messages=messages, metadata=STEPS["answer"], prompt=system_link)
             except Exception as error:
                 turn.update(level="ERROR", status_message=str(error))
@@ -393,7 +393,7 @@ def handle_turn(
                     {"role": "system", "content": retry_note},
                 ]
                 try:
-                    draft = _chat(client, name="5. Robin rewrites the answer", model=robin_model,
+                    draft = _chat(client, name="5. Penny rewrites the answer", model=penny_model,
                                   effort=effort, messages=retry_messages, metadata=STEPS["retry"], prompt=system_link)
                     facts_result, unsupported, language = _facts_check(
                         client, langfuse, draft, checks, name="6. Output guardrail – facts check on the rewrite")
@@ -443,7 +443,7 @@ def _injection_step(client, langfuse, masked_message: str, injection_prompt: str
             result = "BLOCK" if str(verdict.get("result")).upper() == "BLOCK" else "PASS"
             language = verdict.get("language")
             explanation = verdict.get("reason", "")
-        except Exception as error:  # fail open: an error in this check doesn't stop the customer
+        except Exception as error:  # fail open: an error in this check doesn't stop the person
             result, explanation = "ERROR", f"The check failed, so the message was let through: {error}"
         guard.update(output=result, metadata={"result": result, "explanation": explanation, **STEPS["injection"]})
         guard.score(name="guardrail: prompt injection", value=result, data_type="CATEGORICAL", comment=explanation)
@@ -456,14 +456,14 @@ def _look_up(client, langfuse, masked_message: str, history: list[dict], max_res
              result: TurnResult) -> str:
     """The look-up (RAG): rewrite the question into a search query, then search the content database.
 
-    Returns the handbook sections as text for Robin's system prompt. Two steps in the trace:
+    Returns the style guide sections as text for Penny's system prompt. Two steps in the trace:
     'Look-up 1' (a small model writes the query) and 'Look-up 2' (the search in the database).
-    The handbook gets into the database through the ingestion pipeline (ingestion/ingest_handbook.py).
+    The style guide gets into the database through the ingestion pipeline (ingestion/ingest_style_guide.py).
     """
     # Look-up 1: question recognition. A small model turns the message (plus context) into a query.
     recent = history[-6:]
     conversation = "\n".join(f"{item['role']}: {item['content']}" for item in recent) or "(none)"
-    rewrite_prompt, rewrite_link = _text("robin/query-rewrite")
+    rewrite_prompt, rewrite_link = _text("penny/query-rewrite")
     try:
         query = _chat(client, name="Look-up 1 – rewrite the question into a search query", model=GUARDRAIL_MODEL,
                       effort=GUARDRAIL_EFFORT, metadata=STEPS["rewrite"], prompt=rewrite_link,
@@ -471,7 +471,7 @@ def _look_up(client, langfuse, masked_message: str, history: list[dict], max_res
                                 {"role": "user", "content": f"Conversation so far:\n{conversation}\n\n"
                                                             f"Latest message:\n{masked_message}"}]).strip()
     except Exception:
-        log.exception("query rewrite failed; searching with the customer's own words")
+        log.exception("query rewrite failed; searching with the person's own words")
         query = ""
     query = query or masked_message
     result.summary["search_query"] = query
@@ -493,7 +493,7 @@ def _look_up(client, langfuse, masked_message: str, history: list[dict], max_res
                         for hit in hits]
             search.update(output=sections, metadata={
                 **STEPS["search"], "max_results": max_results, "embedding_model": lookup.EMBEDDING_MODEL,
-                "handbook_version": hits[0].document_version, "ingested_at": hits[0].ingested_at,
+                "style_guide_version": hits[0].document_version, "ingested_at": hits[0].ingested_at,
             })
             sources = lookup.format_sources(hits)
             result.summary["sections_found"] = ", ".join(f"{s['section']} ({s['similarity']})" for s in sections)
@@ -501,7 +501,7 @@ def _look_up(client, langfuse, masked_message: str, history: list[dict], max_res
             log.exception("content database search failed")
             reason = str(error) if isinstance(error, lookup.LookUpError) else f"The search failed: {error}"
             search.update(level="ERROR", status_message=reason, metadata=STEPS["search"])
-            sources = "(The handbook could not be searched.)"
+            sources = "(The style guide could not be searched.)"
             result.summary["sections_found"] = f"ERROR: {reason}"
     return sources
 
@@ -509,7 +509,7 @@ def _look_up(client, langfuse, masked_message: str, history: list[dict], max_res
 def _facts_check(client, langfuse, draft: str, checks: dict, name: str) -> tuple[str, list, str | None]:
     """Output guardrail. Returns (PASS/BLOCK/ERROR, unsupported statements, language)."""
     facts = checks["facts"]
-    source = "the handbook sections" if checks["facts_step"] is STEPS["facts_lookup"] else "the return policy"
+    source = "the style guide sections" if checks["facts_step"] is STEPS["facts_lookup"] else "the style essentials"
     with langfuse.start_as_current_observation(
         as_type="guardrail", name=name, input=draft,
     ) as guard:
@@ -536,9 +536,9 @@ def _facts_check(client, langfuse, draft: str, checks: dict, name: str) -> tuple
 
 
 OUTCOME_NOTES = {
-    "answered": "Robin's answer passed every guardrail that was on, and was sent.",
-    "blocked by input guardrail": "The message tried to manipulate Robin, so Robin never saw it. A fixed answer was sent.",
-    "fallback after output guardrail": "Robin's answer contained facts that aren't in its sources, twice. A fixed, honest answer was sent instead.",
+    "answered": "Penny's answer passed every guardrail that was on, and was sent.",
+    "blocked by input guardrail": "The message tried to manipulate Penny, so Penny never saw it. A fixed answer was sent.",
+    "fallback after output guardrail": "Penny's answer contained facts that aren't in its sources, twice. A fixed, honest answer was sent instead.",
     "error": "Something went wrong while calling the model. A fixed apology was sent.",
 }
 
@@ -549,7 +549,7 @@ def _finish(turn, result: TurnResult, facts_result: str) -> TurnResult:
     result.summary.setdefault("rewrite_needed", "no")
     what_happened = OUTCOME_NOTES[result.outcome]
     if result.summary.get("guardrails_switched_off", "none") != "none":
-        what_happened += f" Switched off in the course panel: {result.summary['guardrails_switched_off']}."
+        what_happened += f" Switched off in the settings panel: {result.summary['guardrails_switched_off']}."
     summary = {"outcome": result.outcome, "what_happened": what_happened, **result.summary,
                **result.details.get("settings", {})}
     turn.score_trace(name="outcome", value=result.outcome, data_type="CATEGORICAL")

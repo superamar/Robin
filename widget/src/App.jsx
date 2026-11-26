@@ -1,18 +1,18 @@
 import { useState } from "react";
-import RobinWidget, { MOCK } from "./RobinWidget.jsx";
+import PennyWidget, { MOCK } from "./PennyWidget.jsx";
 
 const MODELS = ["GPT-6 Sol", "GPT-4.1 mini"];
 const EFFORTS = ["none", "low", "medium", "high"];
 const MAX_RESULTS = ["1", "3", "5"];
 
-// The guardrails you can switch off, to see what Robin does with the system prompt alone.
+// The guardrails you can switch off, to see what Penny does with the system prompt alone.
 const GUARDRAILS = [
   { key: "bank_account", label: "Bank account numbers", off: "Your message goes to the model and Langfuse as typed." },
-  { key: "injection", label: "Prompt injection check", off: "Attempts to override Robin's instructions reach Robin." },
-  { key: "facts", label: "Facts check", off: "Robin's answer is sent without checking it against the policy." },
+  { key: "injection", label: "Prompt injection check", off: "Attempts to override Penny's instructions reach Penny." },
+  { key: "facts", label: "Facts check", off: "Penny's answer is sent without checking it against the style guide." },
 ];
-// Off by default, so participants first see Robin with the system prompt alone, then switch guardrails on.
-const DEFAULT_GUARDRAILS = { bank_account: false, injection: false, facts: false };
+// On by default. Switch them off in the settings panel to see what Penny does with the system prompt alone.
+const DEFAULT_GUARDRAILS = { bank_account: true, injection: true, facts: true };
 
 function loadGuardrails() {
   try {
@@ -24,20 +24,20 @@ function loadGuardrails() {
 
 function load(key, fallback) {
   try {
-    return localStorage.getItem(`robin.${key}`) ?? fallback;
+    return localStorage.getItem(`penny.${key}`) ?? fallback;
   } catch {
     return fallback;
   }
 }
 function save(key, value) {
   try {
-    localStorage.setItem(`robin.${key}`, value);
+    localStorage.setItem(`penny.${key}`, value);
   } catch {
     /* storage unavailable: settings just aren't remembered */
   }
 }
 
-function CoursePanel({ settings, setSettings }) {
+function SettingsPanel({ settings, setSettings }) {
   const [expanded, setExpanded] = useState(false); // collapsed until someone opens it
   const update = (key) => (event) => {
     const value = event.target.value;
@@ -59,27 +59,27 @@ function CoursePanel({ settings, setSettings }) {
   };
   const allOff = GUARDRAILS.every((g) => !settings.guardrails[g.key]);
   return (
-    <aside className={`course ${expanded ? "" : "course--collapsed"}`} aria-label="Course settings">
-      <button type="button" className="course__toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
-        Course settings <span aria-hidden="true">{expanded ? "–" : "+"}</span>
+    <aside className={`settings ${expanded ? "" : "settings--collapsed"}`} aria-label="Settings">
+      <button type="button" className="settings__toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
+        Settings <span aria-hidden="true">{expanded ? "–" : "+"}</span>
       </button>
       {expanded && (
-        <div className="course__body">
+        <div className="settings__body">
           <label>
             First name or nickname
-            <input id="robin-name" value={settings.name} onChange={update("name")} autoComplete="off" />
+            <input id="penny-name" value={settings.name} onChange={update("name")} autoComplete="off" />
             <small>Shown in Langfuse, so you can find your own chats.</small>
           </label>
           {!MOCK && (
             <label>
-              Course passcode
-              <input id="robin-passcode" type="password" value={settings.passcode} onChange={update("passcode")} />
+              Passcode
+              <input id="penny-passcode" type="password" value={settings.passcode} onChange={update("passcode")} />
             </label>
           )}
-          <div className="course__row">
+          <div className="settings__row">
             <label>
-              Robin's model
-              <select id="robin-model" value={settings.model} onChange={update("model")}>
+              Penny's model
+              <select id="penny-model" value={settings.model} onChange={update("model")}>
                 {MODELS.map((m) => (
                   <option key={m}>{m}</option>
                 ))}
@@ -87,7 +87,7 @@ function CoursePanel({ settings, setSettings }) {
             </label>
             <label>
               Reasoning effort
-              <select id="robin-effort" value={settings.effort} onChange={update("effort")} disabled={settings.model !== "GPT-6 Sol"}>
+              <select id="penny-effort" value={settings.effort} onChange={update("effort")} disabled={settings.model !== "GPT-6 Sol"}>
                 {EFFORTS.map((e) => (
                   <option key={e}>{e}</option>
                 ))}
@@ -96,15 +96,15 @@ function CoursePanel({ settings, setSettings }) {
           </div>
           <label>
             Prompt label <small>(optional)</small>
-            <input id="robin-label" value={settings.promptLabel} onChange={update("promptLabel")} autoComplete="off" placeholder="production" />
+            <input id="penny-label" value={settings.promptLabel} onChange={update("promptLabel")} autoComplete="off" placeholder="production" />
             <small>
-              Try your own version of Robin's system prompt: save it in Langfuse with this label. Empty means production.
+              Try your own version of Penny's system prompt: save it in Langfuse with this label. Empty means production.
             </small>
           </label>
-          <fieldset className="course__guards">
+          <fieldset className="settings__guards">
             <legend>Guardrails</legend>
             {GUARDRAILS.map((g) => (
-              <label key={g.key} className="course__check">
+              <label key={g.key} className="settings__check">
                 <input type="checkbox" checked={settings.guardrails[g.key]} onChange={toggleGuardrail(g.key)} />
                 <span>
                   {g.label}
@@ -112,83 +112,42 @@ function CoursePanel({ settings, setSettings }) {
                 </span>
               </label>
             ))}
-            <p className="course__hint">
+            <p className="settings__hint">
               {allOff
-                ? "All off: Robin runs on the system prompt alone."
+                ? "All off: Penny runs on the system prompt alone."
                 : "Switch guardrails on and off to compare the answers and the traces."}
             </p>
           </fieldset>
-          <fieldset className="course__guards">
+          <fieldset className="settings__guards">
             <legend>Look-up (RAG)</legend>
-            <label className="course__check">
+            <label className="settings__check">
               <input type="checkbox" checked={settings.lookUp} onChange={toggleLookUp} />
-              <span>Look things up in the handbook</span>
+              <span>Look things up in the full style guide</span>
             </label>
-            <p className="course__hint">
+            <p className="settings__hint">
               {settings.lookUp
-                ? "On: Robin searches the customer handbook and answers from the sections it finds."
-                : "Off: Robin only knows the return policy in its system prompt."}
+                ? "On: Penny searches the full style guide and answers from the sections it finds."
+                : "Off: Penny only knows the style essentials in its system prompt."}
             </p>
             <label>
               Max results
-              <select id="robin-max-results" value={settings.maxResults} onChange={update("maxResults")} disabled={!settings.lookUp}>
+              <select id="penny-max-results" value={settings.maxResults} onChange={update("maxResults")} disabled={!settings.lookUp}>
                 {MAX_RESULTS.map((n) => (
                   <option key={n}>{n}</option>
                 ))}
               </select>
-              <small>How many handbook sections Robin gets for each question.</small>
+              <small>How many style guide sections Penny gets for each message.</small>
             </label>
-            <p className="course__hint">
+            <p className="settings__hint">
               <a href="/chunks.html" target="_blank" rel="noopener">
                 See the chunks in the content database ↗
               </a>
             </p>
           </fieldset>
-          {MOCK && <p className="course__mock">Preview: Robin's answers are scripted, and these settings have no effect yet.</p>}
+          {MOCK && <p className="settings__mock">Preview: Penny's answers are scripted, and these settings have no effect yet.</p>}
         </div>
       )}
     </aside>
-  );
-}
-
-const PRODUCTS = [
-  { name: "Duin vase", note: "Hand-thrown stoneware, 28 cm", price: "€ 49,00", art: "vase" },
-  { name: "Kiezel table lamp", note: "Linen shade, oak base", price: "€ 89,00", art: "lamp" },
-  { name: "Golf cushion cover", note: "Washed cotton, 50 × 50 cm", price: "€ 34,50", art: "cushion" },
-  { name: "Made-to-measure curtains", note: "Heavy linen, your size", price: "from € 129,00", art: "curtain" },
-];
-
-function ProductArt({ kind }) {
-  const common = { fill: "none", stroke: "var(--ink)", strokeWidth: 2.2, strokeLinejoin: "round", strokeLinecap: "round" };
-  return (
-    <svg viewBox="0 0 160 160" className="product__svg" aria-hidden="true">
-      {kind === "vase" && (
-        <>
-          <path d="M66 30h28M70 30c0 18-24 26-24 62 0 22 14 38 34 38s34-16 34-38c0-36-24-44-24-62" {...common} fill="var(--clay)" />
-          <path d="M58 92c14 6 30 6 44 0" {...common} />
-        </>
-      )}
-      {kind === "lamp" && (
-        <>
-          <path d="M52 70l12-40h32l12 40z" {...common} fill="var(--sun)" />
-          <path d="M80 70v52M60 128h40" {...common} />
-          <rect x="70" y="120" width="20" height="10" rx="3" {...common} fill="var(--oak)" />
-        </>
-      )}
-      {kind === "cushion" && (
-        <>
-          <path d="M38 50c14-8 70-8 84 0 8 20 8 40 0 60-14 8-70 8-84 0-8-20-8-40 0-60z" {...common} fill="var(--sage)" />
-          <path d="M60 80c8-10 32-10 40 0" {...common} />
-        </>
-      )}
-      {kind === "curtain" && (
-        <>
-          <path d="M34 34h92" {...common} />
-          <path d="M42 36c-4 30 6 62-2 92h30c-6-30 4-62 0-92z" {...common} fill="var(--fog)" />
-          <path d="M90 36c-4 30 6 62-2 92h30c-6-30 4-62 0-92z" {...common} fill="var(--fog)" />
-        </>
-      )}
-    </svg>
   );
 }
 
@@ -199,7 +158,7 @@ export default function App() {
     model: load("model", "GPT-6 Sol"),
     effort: load("effort", "medium"),
     guardrails: loadGuardrails(),
-    lookUp: load("lookUp", "false") === "true", // off by default: Robin as it was, until you switch it on
+    lookUp: load("lookUp", "false") === "true", // off by default: Penny as it was, until you switch it on
     maxResults: load("maxResults", "3"),
     promptLabel: load("promptLabel", ""),
   }));
@@ -209,92 +168,68 @@ export default function App() {
   return (
     <>
       <div className="demo-bar" role="note">
-        Demo shop for the course <em>GenAI design for conversations and content</em>. Nest & Co is invented: nothing here is for sale.
+        Penny's starter content is condensed from the public 1Password writing style guide.
       </div>
 
       <header className="site-header">
-        <a className="logo" href="#top" aria-label="Nest & Co home">
-          Nest<span>&</span>Co
+        <a className="logo" href="#top" aria-label="Penny home">
+          Penny
         </a>
         <nav className="site-nav" aria-label="Main">
-          <a href="#shop">Living</a>
-          <a href="#shop">Lighting</a>
-          <a href="#shop">Textiles</a>
-          <a href="/help/faq">Help & returns</a>
+          <a href="/help/style-guide">Style guide</a>
+          <a href="/chunks.html">Content database</a>
         </nav>
-        <span className="basket" aria-label="Basket, 0 items">
-          Basket <b>0</b>
-        </span>
       </header>
 
       <main id="top">
-        <section className="hero">
+        <section className="hero hero--penny">
           <div className="hero__text">
-            <p className="eyebrow">Autumn collection</p>
-            <h1>Homeware that settles in.</h1>
+            <p className="eyebrow">Writing style assistant</p>
+            <h1>Write it the 1Password way.</h1>
             <p className="hero__lead">
-              Stoneware, linen and oak, made in small batches by makers we know by name. Changed your mind? You have 30 days.
+              Ask Penny how to write something, or paste copy to review against the 1Password writing style guide. Penny quotes the
+              words, explains the rule, and suggests a rewrite.
             </p>
-            <a className="btn" href="#shop">
-              Shop the collection
-            </a>
-          </div>
-          <div className="hero__art" aria-hidden="true">
-            <div className="hero__shelf" />
-            <ProductArt kind="vase" />
-            <ProductArt kind="lamp" />
+            <button type="button" className="btn" onClick={() => setOpen(true)}>
+              Ask Penny
+            </button>
           </div>
         </section>
 
-        <section id="shop" className="products" aria-labelledby="shop-title">
-          <h2 id="shop-title">New this week</h2>
-          <ul className="product-grid">
-            {PRODUCTS.map((p) => (
-              <li key={p.name} className="product">
-                <div className="product__image">
-                  <ProductArt kind={p.art} />
-                </div>
-                <h3>{p.name}</h3>
-                <p className="product__note">{p.note}</p>
-                <p className="product__price">{p.price}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section id="help" className="help" aria-labelledby="help-title">
-          <h2 id="help-title">Returns, simply explained</h2>
+        <section className="help" aria-labelledby="help-title">
+          <h2 id="help-title">What Penny can do</h2>
           <ul className="help__list">
             <li>
-              <b>30 days</b>
-              <span>to return a product after delivery</span>
+              <b>Answer</b>
+              <span>style questions, such as "sign in" or "log in"</span>
             </li>
             <li>
-              <b>Unused</b>
-              <span>and in its original packaging</span>
+              <b>Review</b>
+              <span>buttons, errors, empty states, and onboarding copy</span>
             </li>
             <li>
-              <b>€ 4,95</b>
-              <span>return costs, free if it arrived damaged</span>
+              <b>Rewrite</b>
+              <span>copy so it follows voice, mechanics, and terminology rules</span>
             </li>
             <li>
-              <b>14 days</b>
-              <span>to get your refund after we receive it</span>
+              <b>Explain</b>
+              <span>the reason behind each rule, so it sticks</span>
             </li>
           </ul>
-          <p className="help__more">Made-to-measure products can't be returned. Questions? Robin is happy to help, bottom right.</p>
+          <p className="help__more">
+            Penny can make mistakes. For a definite answer, check the <a href="/help/style-guide">style guide</a> or ask the content
+            design team.
+          </p>
         </section>
       </main>
 
       <footer className="site-footer">
-        <span className="logo logo--small">
-          Nest<span>&</span>Co
-        </span>
-        <span>An invented shop, built to practise conversation design.</span>
+        <span className="logo logo--small">Penny</span>
+        <span>A writing style assistant for 1Password product copy.</span>
       </footer>
 
-      <CoursePanel settings={settings} setSettings={setSettings} />
-      <RobinWidget
+      <SettingsPanel settings={settings} setSettings={setSettings} />
+      <PennyWidget
         key={sessionId}
         open={open}
         onOpenChange={setOpen}

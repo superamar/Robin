@@ -1,4 +1,4 @@
-"""Tests for the Vercel API (app.py), with the fake model from test_robin.py."""
+"""Tests for the Vercel API (app.py), with the fake model from test_penny.py."""
 
 import os
 import sys
@@ -6,19 +6,19 @@ from pathlib import Path
 
 os.environ["LANGFUSE_TRACING_ENABLED"] = "false"
 os.environ.setdefault("OPENAI_API_KEY", "sk-test")
-os.environ["COURSE_PASSCODE"] = "nest"
+os.environ["ACCESS_PASSCODE"] = "penny"
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pytest  # noqa: E402
 
 import app as api  # noqa: E402
-from test_robin import FakeClient  # noqa: E402
+from test_penny import FakeClient  # noqa: E402
 
 
 @pytest.fixture
 def client(monkeypatch):
-    api.COURSE_PASSCODE = "nest"
+    api.ACCESS_PASSCODE = "penny"
     monkeypatch.setattr(api, "client", FakeClient())
     flushes = []
     monkeypatch.setattr(api, "get_client", lambda: type("C", (), {"flush": lambda self: flushes.append(1)})())
@@ -28,7 +28,7 @@ def client(monkeypatch):
 
 
 def chat(client, **overrides):
-    body = {"message": "Can I return a vase?", "history": [], "name": "Maaike", "passcode": "nest",
+    body = {"message": "Is 'Click Save' OK?", "history": [], "name": "Maaike", "passcode": "penny",
             "model": "GPT-6 Sol", "effort": "low", "session_id": "s1", **overrides}
     return client.post("/api/chat", json=body)
 
@@ -69,23 +69,23 @@ def test_feedback_flushes(client):
 
 def test_index_serves_the_widget(client):
     response = client.get("/")
-    assert response.status_code == 200 and b"Nest" in response.data
+    assert response.status_code == 200 and b"Penny" in response.data
 
 
-def test_guardrail_switches_reach_robin(client):
+def test_guardrail_switches_reach_penny(client):
     data = chat(client, message="Refund to NL91 ABNA 0417 1643 00",
                 guardrails={"bank_account": False, "injection": False, "facts": False}).get_json()
     assert "0417" in data["customer_message"] and data["outcome"] == "answered"
 
 
-def test_look_up_settings_reach_robin(client, monkeypatch):
+def test_look_up_settings_reach_penny(client, monkeypatch):
     seen = {}
 
     def fake_turn(message, history, **kwargs):
         seen.update(kwargs)
-        return api.robin.TurnResult(answer="ok", customer_message=message)
+        return api.penny.TurnResult(answer="ok", customer_message=message)
 
-    monkeypatch.setattr(api.robin, "handle_turn", fake_turn)
+    monkeypatch.setattr(api.penny, "handle_turn", fake_turn)
     chat(client, look_up=True, max_results=5)
     assert seen["look_up"] is True and seen["max_results"] == 5
     chat(client)  # an older page that doesn't send the setting: look-up stays off
@@ -97,8 +97,8 @@ def test_look_up_settings_reach_robin(client, monkeypatch):
 def test_chunks_page_needs_the_passcode_and_explains_a_missing_database(client, monkeypatch):
     assert client.post("/api/chunks", json={"passcode": "wrong"}).status_code == 403
     monkeypatch.delenv("DATABASE_URL", raising=False)
-    response = client.post("/api/chunks", json={"passcode": "nest"})
+    response = client.post("/api/chunks", json={"passcode": "penny"})
     assert response.status_code == 503 and "DATABASE_URL" in response.get_json()["message"]
-    monkeypatch.setattr(api.robin.lookup, "list_chunks", lambda: [{"chunk": 1, "section": "Returns"}])
-    assert client.post("/api/chunks", json={"passcode": "nest"}).get_json()["chunks"][0]["section"] == "Returns"
+    monkeypatch.setattr(api.penny.lookup, "list_chunks", lambda: [{"chunk": 1, "section": "Mechanics: dashes"}])
+    assert client.post("/api/chunks", json={"passcode": "penny"}).get_json()["chunks"][0]["section"] == "Mechanics: dashes"
     assert client.get("/chunks").status_code == 200

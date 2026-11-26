@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Content database – Robin</title>
+<title>Content database – Penny</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Familjen+Grotesk:wght@500;700&display=swap" />
@@ -51,15 +51,15 @@
 </style>
 </head>
 <body>
-<div class="demo-bar">Demo shop for the course <em>GenAI design for conversations and content</em>. Nest &amp; Co is invented.</div>
+<div class="demo-bar">Penny – the content database behind look-up.</div>
 <main>
   <a class="back" href="/">← Back to the shop</a>
-  <p class="eyebrow">Robin · look-up (RAG)</p>
+  <p class="eyebrow">Penny · look-up (RAG)</p>
   <h1>The content database</h1>
-  <p class="lead">Every card is one chunk of the customer handbook, as the ingestion pipeline stored it: the text Robin can find, and the embedding it's found by. Robin searches these chunks; it never reads the handbook itself.</p>
+  <p class="lead">Every card is one chunk of the style guide, as the ingestion pipeline stored it: the text Penny can find, and the embedding it's found by. Penny searches these chunks; it never reads the handbook itself.</p>
 
   <form id="form">
-    <label>Course passcode <input id="passcode" type="password" autocomplete="off" /></label>
+    <label>Passcode <input id="passcode" type="password" autocomplete="off" /></label>
     <button type="submit">Show the chunks</button>
   </form>
 
@@ -96,7 +96,7 @@
     $("summary").replaceChildren();
     if (!chunks.length) {
       $("summary").hidden = true;
-      show("The database is empty. Run the ingestion first: on GitHub, Actions › “Ingest the handbook”.", true);
+      show("The database is empty. Run the ingestion first: on GitHub, Actions › “Ingest the style guide”.", true);
       return;
     }
     $("status").hidden = true;

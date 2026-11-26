@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest  # noqa: E402
 
-import robin  # noqa: E402
+import penny  # noqa: E402
 
 CASES = list(csv.DictReader(open(Path(__file__).with_name("bank_account_cases.csv"), encoding="utf-8")))
 
@@ -27,7 +27,7 @@ def _param(case):
 
 @pytest.mark.parametrize("case", [_param(c) for c in CASES])
 def test_bank_account_case(case):
-    _, found = robin.mask_bank_accounts(case["message"])
+    _, found = penny.mask_bank_accounts(case["message"])
     if case["expected"] == "PASS":
         assert found == 0, case["why"]
     else:  # MASKED, or a KNOWN GAP that should be masked one day

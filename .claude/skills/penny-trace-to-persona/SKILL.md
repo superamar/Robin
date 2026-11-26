@@ -1,18 +1,18 @@
 ---
-name: robin-trace-to-persona
-description: "Pull real Robin conversations from Langfuse and summarize recurring user personas and intents for a content manager — not raw analytics, not a dashboard, a short written read of who's actually talking to Robin and what they want. Reuses dashboard-kit/dashboard-data.json when it's fresh instead of re-querying Langfuse. Triggers: '/robin-trace-to-persona', 'who's talking to Robin', 'summarize user personas', 'what are people actually asking'."
+name: penny-trace-to-persona
+description: "Pull real Penny conversations from Langfuse and summarize recurring user personas and intents for a content manager — not raw analytics, not a dashboard, a short written read of who's actually talking to Penny and what they want. Reuses dashboard-kit/dashboard-data.json when it's fresh instead of re-querying Langfuse. Triggers: '/penny-trace-to-persona', 'who's talking to Penny', 'summarize user personas', 'what are people actually asking'."
 ---
 
-# robin-trace-to-persona — turn real conversations into personas a content manager can use
+# penny-trace-to-persona — turn real conversations into personas a content manager can use
 
 This is for a content manager, not a dashboard: a short written read of who's actually talking
-to Robin and what they want, with real quotes — not a chart, not a trace-by-trace report.
+to Penny and what they want, with real quotes — not a chart, not a trace-by-trace report.
 
 ## Step 1 — Get the data
 
 Check whether `dashboard-kit/dashboard-data.json` exists and is recent (compare its newest
-conversation's `time` against now). If it's stale or missing, run the `robin-dashboard` skill's
-Step 2 (`robin_adapter.py`) to refresh it rather than writing a second Langfuse query path — this
+conversation's `time` against now). If it's stale or missing, run the `penny-dashboard` skill's
+Step 2 (`penny_adapter.py`) to refresh it rather than writing a second Langfuse query path — this
 repo already has one correct way to pull conversations; reuse it.
 
 ## Step 2 — Cluster, don't just list
@@ -25,10 +25,10 @@ is my order", which are different intents). Within each topic, read the actual `
 - **Repeat patterns** — the same kind of question asked by several different `userId`s, worded
   differently each time (that's a real recurring intent, not a one-off).
   - The same `userId` asking many variations in one session is a *tester* exploring the bot
-    (jailbreak attempts, "are you human" probing), not a customer persona — call it out
+    (jailbreak attempts, "are you human" probing), not a real persona — call it out
     separately, don't fold it into a persona.
 - **Frustration signals** — "useless", repeated requests for a human, a conversation that ends
-  without resolution. These are personas too ("the customer who wants out to a human"), often the
+  without resolution. These are personas too ("the writer who wants a person to decide"), often the
   most useful one for a content manager to know about.
 - **Mismatches** — someone asking something the bot's current knowledge doesn't cover (e.g.
   shipping questions when look-up is off) — worth flagging as a content gap, not just a persona
@@ -38,7 +38,7 @@ is my order", which are different intents). Within each topic, read the actual `
 
 For each persona/intent cluster: a short name, what they want, how they tend to phrase it (one
 or two real quotes, trimmed if long), roughly how often it shows up, and anything actionable for
-a content manager (a gap in the handbook, a tone mismatch, a missing escalation path). Skip
+a content manager (a gap in the style guide, a tone mismatch, a missing escalation path). Skip
 clusters with only one example unless it's a notably sharp signal (e.g. a safety concern) —
 don't manufacture a persona out of a single data point.
 

@@ -1,4 +1,4 @@
-"""Prompt labels: a student's own version of the system prompt, chosen in the course panel."""
+"""Prompt labels: your own version of the system prompt, chosen in the settings panel."""
 
 import os
 import sys
@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import prompts  # noqa: E402
-import robin  # noqa: E402
-from test_robin import FakeClient  # noqa: E402
+import penny  # noqa: E402
+from test_penny import FakeClient  # noqa: E402
 
 
 class FakePrompt:
@@ -23,11 +23,11 @@ class FakePrompt:
 
 
 class FakeLangfuse:
-    """Prompt Management with one student version: 'leela' on version 7 of robin/system-prompt."""
+    """Prompt Management with one personal version: 'leela' on version 7 of penny/system-prompt."""
 
     def get_prompt(self, name, label="production", **kwargs):
-        if name == "robin/system-prompt" and label == "leela":
-            return FakePrompt("LEELA'S SYSTEM PROMPT {{return_policy}}", 7, ["leela"])
+        if name == "penny/system-prompt" and label == "leela":
+            return FakePrompt("LEELA'S SYSTEM PROMPT {{style_essentials}}", 7, ["leela"])
         if label != "production":
             raise LookupError(f"no label {label}")
         return FakePrompt(prompts.LANGFUSE_PROMPTS[name], 3, ["production", "latest"])
@@ -35,16 +35,16 @@ class FakeLangfuse:
 
 def run(monkeypatch, label):
     fake = FakeLangfuse()
-    monkeypatch.setattr(robin, "get_client", lambda: SimpleNamespace(
-        get_prompt=fake.get_prompt, start_as_current_observation=robin_get_client().start_as_current_observation,
+    monkeypatch.setattr(penny, "get_client", lambda: SimpleNamespace(
+        get_prompt=fake.get_prompt, start_as_current_observation=penny_get_client().start_as_current_observation,
         get_current_trace_id=lambda: None, flush=lambda: None))
     client = FakeClient()
-    result = robin.handle_turn("Can I return a vase?", [], client=client, label=label, guardrails={
+    result = penny.handle_turn("Is 'Click Save' OK?", [], client=client, label=label, guardrails={
         "bank_account": False, "injection": False, "facts": False})
     return result, client.calls[0]["messages"][0]["content"]
 
 
-robin_get_client = robin.get_client
+penny_get_client = penny.get_client
 
 
 def test_a_student_label_uses_their_version(monkeypatch):
@@ -65,5 +65,5 @@ def test_no_label_means_production(monkeypatch):
 
 
 def test_labels_are_cleaned_up():
-    assert robin.prompt_label("  Leela B! ") == "leelab"
-    assert robin.prompt_label("production") is None and robin.prompt_label(None) is None
+    assert penny.prompt_label("  Leela B! ") == "leelab"
+    assert penny.prompt_label("production") is None and penny.prompt_label(None) is None

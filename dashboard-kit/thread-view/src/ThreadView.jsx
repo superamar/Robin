@@ -7,7 +7,7 @@ import {
 } from "@assistant-ui/react";
 
 // Read-only thread view for one conversation from dashboard-data.json, rendered with the
-// same @assistant-ui/react primitives as the Robin widget and the va-dashboard agent-frontend
+// same @assistant-ui/react primitives as the Penny widget and the va-dashboard agent-frontend
 // (ThreadPrimitive / MessagePrimitive). Layout follows the Waddinxveen dashboard: chat on the
 // left, a "Bronnen" (sources) + "Beoordeling" (review) panel on the right for the latest answer.
 
@@ -51,12 +51,12 @@ function UserMessage() {
 
 function AssistantMessage() {
   return (
-    <MessagePrimitive.Root className="msg msg--robin">
+    <MessagePrimitive.Root className="msg msg--penny">
       <div className="avatar" aria-hidden="true">
         R
       </div>
       <div className="msg__body">
-        <div className="bubble bubble--robin">
+        <div className="bubble bubble--penny">
           <MessagePrimitive.Content />
         </div>
       </div>

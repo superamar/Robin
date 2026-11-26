@@ -1,10 +1,7 @@
-"""The Nest & Co help centre: the customer handbook and the product guide as web pages.
+"""The style guide as a web page, so people can read the source Penny answers from.
 
-Every section has its own link (for example /help/handbook#returns), so a chatbot that cites a
-section can link to it. The links are also written at the end of each section in the documents
-that go into the data sources, so the link travels with the chunk.
-
-The internal Customer Care playbook is deliberately not published here.
+Every section has its own link (for example /help/style-guide#mechanics-dashes), so an answer that
+cites a section can link to it.
 """
 
 from __future__ import annotations
@@ -18,7 +15,7 @@ from markdown.extensions.toc import slugify_unicode
 
 
 def slugify(value: str, separator: str) -> str:
-    """Section anchors such as 'returns' or 'tromso-coffee-table'."""
+    """Section anchors such as 'mechanics-dashes'."""
     for letter, plain in {"ø": "o", "Ø": "O", "æ": "ae", "å": "a"}.items():
         value = value.replace(letter, plain)
     plain_letters = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode()
@@ -26,9 +23,7 @@ def slugify(value: str, separator: str) -> str:
 
 CONTENT = Path(__file__).parent / "content"
 DOCUMENTS = {
-    "faq": ("Frequently asked questions", CONTENT / "faq.md"),
-    "handbook": ("Customer handbook", CONTENT / "handbook.md"),
-    "product-guide": ("Product guide", CONTENT / "product-guide.md"),
+    "style-guide": ("1Password writing style guide", CONTENT / "style-guide.md"),
 }
 
 PAGE = """<!doctype html>
@@ -36,7 +31,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>{title} – Nest &amp; Co help centre</title>
+<title>{title} – Penny</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Familjen+Grotesk:wght@500;700&display=swap" />
@@ -70,9 +65,9 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
-<div class="demo-bar">Demo shop for the course <em>GenAI design for conversations and content</em>. Nest &amp; Co is invented.</div>
+<div class="demo-bar">Starter content condensed from the public 1Password writing style guide.</div>
 <div class="wrap">
-  <p class="crumbs"><a href="/">Nest &amp; Co</a> › <a href="/help">Help centre</a> › {title}</p>
+  <p class="crumbs"><a href="/">Penny</a> › <a href="/help">Sources</a> › {title}</p>
   <nav aria-label="Sections"><b>{title}</b>{toc}</nav>
   <article>{body}</article>
 </div>
@@ -81,12 +76,12 @@ PAGE = """<!doctype html>
 
 INDEX = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Help centre – Nest &amp; Co</title>
+<title>Sources – Penny</title>
 <style>body{{margin:0;background:#f2f3ee;color:#1d2a23;font-family:"Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;line-height:1.6}}
 main{{max-width:720px;margin:0 auto;padding:48px 16px}} h1{{font-family:"Familjen Grotesk",Arial,sans-serif;font-size:40px;margin:0 0 16px}}
 a.card{{display:block;background:#fbfbf8;border:1px solid #d6dbd2;border-radius:16px;padding:18px 20px;margin:12px 0;color:#1d2a23;text-decoration:none}}
 a.card b{{font-size:20px}} a.card:hover{{border-color:#2f4b3b}}</style></head>
-<body><main><p><a href="/">← Back to the shop</a></p><h1>Help centre</h1>{cards}</main></body></html>"""
+<body><main><p><a href="/">← Back to Penny</a></p><h1>Sources</h1>{cards}</main></body></html>"""
 
 
 def render(slug: str) -> str | None:

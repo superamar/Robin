@@ -1,17 +1,24 @@
-"""Robin's look-up (RAG): the content database and the search in it.
+"""Penny's look-up (RAG): the content database and the search in it.
 
-The steps follow the course slide "DocBot: from question to answer":
+The steps of a classic RAG pipeline:
 
-    Ingestion pipeline    ingestion/ingest_handbook.py: get the handbook, preprocess it, cut it into
+    Ingestion pipeline    ingestion/ingest_style_guide.py: get the style guide, preprocess it, cut it into
                           chunks, turn each chunk into an embedding, and store it all in the content
-                          database (Postgres with pgvector). It runs separately from Robin, whenever
-                          the handbook changes: Actions > "Ingest the handbook".
-    Question recognition  robin.py: a small model rewrites the customer's message into a search query
+                          database (Postgres with pgvector). It runs separately from Penny, whenever
+                          the style guide changes: Actions > "Ingest the style guide".
+    Question recognition  penny.py: a small model rewrites the person's message into a search query
     Information retrieval search() below: the query becomes an embedding, and the database returns the
                           chunks whose embeddings are closest to it
-    Response generation   robin.py: Robin answers with those chunks as its context
+    Response generation   penny.py: Penny answers with those chunks as its context
 
-Robin never reads the handbook itself: it only queries the database.
+Penny never reads the style guide itself: it only queries the database.
+
+Moving to AWS Bedrock later: this file is the seam. embed() would call a Bedrock embedding model
+(for example Amazon Titan Text Embeddings) instead of OpenAI, and search() would query a Bedrock
+Knowledge Base (the Retrieve API) or your own vector store instead of Postgres. As long as search()
+keeps returning Hit objects, penny.py doesn't need to change. With a Bedrock Knowledge Base, the
+ingestion pipeline (chunk, embed, store) is done by Bedrock, and ingestion/ingest_style_guide.py
+is replaced by a sync of the Knowledge Base's data source.
 """
 
 from __future__ import annotations
@@ -21,7 +28,7 @@ import re
 from dataclasses import dataclass
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-TABLE = "handbook_chunks"
+TABLE = "style_guide_chunks"
 MAX_RESULTS_CHOICES = (1, 3, 5)
 DEFAULT_MAX_RESULTS = 3
 
@@ -47,7 +54,7 @@ class LookUpError(Exception):
 
 @dataclass
 class Chunk:
-    section: str      # the heading, for example "Delivery"
+    section: str      # the heading, for example "Mechanics: dashes"
     text: str         # the heading plus everything under it
 
 
@@ -64,12 +71,12 @@ class Hit:
 # Chunking (used by the ingestion pipeline)
 # ---------------------------------------------------------------------------
 
-def split_into_chunks(handbook: str) -> list[Chunk]:
+def split_into_chunks(document: str) -> list[Chunk]:
     """One chunk per '## ' section. The title and document information before the first section
     become a chunk of their own, called 'Document information'."""
     chunks: list[Chunk] = []
     section, lines = "Document information", []
-    for line in handbook.splitlines():
+    for line in document.splitlines():
         if line.startswith("## "):
             if "".join(lines).strip():
                 chunks.append(Chunk(section, "\n".join(lines).strip()))
@@ -81,10 +88,10 @@ def split_into_chunks(handbook: str) -> list[Chunk]:
     return chunks
 
 
-def document_info(handbook: str) -> tuple[str, str]:
-    """The document code and version from the handbook's metadata table."""
+def document_info(document: str) -> tuple[str, str]:
+    """The document code and version from the document metadata table."""
     def field(name: str, default: str) -> str:
-        match = re.search(rf"\*\*{name}\*\*\s*\|\s*([^|\n]+)", handbook)
+        match = re.search(rf"\*\*{name}\*\*\s*\|\s*([^|\n]+)", document)
         return match.group(1).strip() if match else default
     return field("Document code", "unknown"), field("Version", "unknown")
 
@@ -115,7 +122,7 @@ def connect():
 
 
 def store(chunks: list[Chunk], embeddings: list[list[float]], document_code: str, document_version: str) -> int:
-    """Replace the handbook's chunks in the database with these ones, in one transaction."""
+    """Replace the document's chunks in the database with these ones, in one transaction."""
     with connect() as conn, conn.transaction():
         conn.execute(SCHEMA)
         conn.execute(f"DELETE FROM {TABLE} WHERE document_code = %s", (document_code,))
@@ -144,11 +151,11 @@ def search(query_embedding: list[float], limit: int) -> list[Hit]:
     except Exception as error:
         if "does not exist" in str(error):
             raise LookUpError("The content database is empty: run the ingestion first "
-                              "(Actions > \"Ingest the handbook\").") from error
+                              "(Actions > \"Ingest the style guide\").") from error
         raise
     if not rows:
         raise LookUpError("The content database is empty: run the ingestion first "
-                          "(Actions > \"Ingest the handbook\").")
+                          "(Actions > \"Ingest the style guide\").")
     return [Hit(section, content, float(similarity), version, str(ingested_at))
             for section, content, similarity, version, ingested_at in rows]
 
@@ -179,7 +186,7 @@ def list_chunks(numbers: int = 8) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Settings and formatting (used by Robin)
+# Settings and formatting (used by Penny)
 # ---------------------------------------------------------------------------
 
 def max_results(value) -> int:
@@ -192,7 +199,7 @@ def max_results(value) -> int:
 
 
 def format_sources(hits: list[Hit]) -> str:
-    """The chunks as Robin sees them in its system prompt."""
+    """The chunks as Penny sees them in its system prompt."""
     if not hits:
         return "(No sections were found.)"
     return "\n\n".join(f"### Section: {hit.section}\n{_without_heading(hit.text)}" for hit in hits)

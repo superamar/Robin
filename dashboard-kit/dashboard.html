@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robin — Nest &amp; Co Chatbot Dashboard</title>
+<title>Penny — writing style assistant dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   /* ===== shadcn/ui Design Tokens =====
@@ -214,7 +214,7 @@
 <div class="header">
   <div class="logo">M</div>
   <div>
-    <h1>Robin — Nest &amp; Co Chatbot Analytics</h1>
+    <h1>Penny — writing style assistant analytics</h1>
     <div class="subtitle">Interactief dashboard voor chatbotprestaties</div>
   </div>
 </div>
@@ -261,7 +261,7 @@
     <div class="tab-main">
       <div class="info-box">
         <h4>Dashboard voor de Product Owner</h4>
-        <p>Focus: adoptie, waarde voor de organisatie en bereik van Robin. Doel: inzicht in gesprekskwaliteit voor de Maven-cursus.</p>
+        <p>Focus: adoptie, waarde voor de organisatie en bereik van Penny. Doel: inzicht in gesprekskwaliteit voor de Maven-cursus.</p>
       </div>
 
       <div id="po-overzicht" class="po-section">
@@ -836,7 +836,7 @@ function monthToDateRange(monthKey) {
 // ========== INLINE EXPANDABLE ROW ==========
 // Clicking a conversation row expands it in place (an extra <tr> right below it) instead of a
 // popup, with the thread rendered by thread-view/ (a tiny @assistant-ui/react app — the same
-// primitives as the Robin widget and the va-dashboard agent-frontend) in an iframe.
+// primitives as the Penny widget and the va-dashboard agent-frontend) in an iframe.
 const expandedRows = new Set();
 
 function openConvo(idx) {
@@ -1299,7 +1299,7 @@ function exportSelection() {
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'robin-selectie-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.download = 'penny-selectie-' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
 }
 

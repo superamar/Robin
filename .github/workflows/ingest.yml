@@ -1,11 +1,11 @@
-# The ingestion pipeline: puts the customer handbook into Robin's content database
-# (ingestion/ingest_handbook.py). Run it after every change to the handbook:
-# Actions > "Ingest the handbook" > Run workflow.
+# The ingestion pipeline: puts the 1Password writing style guide into Penny's content database
+# (ingestion/ingest_style_guide.py). Run it after every change to the style guide:
+# Actions > "Ingest the style guide" > Run workflow.
 # Needs four repository secrets (Settings > Secrets and variables > Actions):
 #   OPENAI_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, DATABASE_URL
 # DATABASE_URL is the database's External Database URL from the Render dashboard.
 # Optionally the variable LANGFUSE_BASE_URL (default: the EU region, https://cloud.langfuse.com).
-name: Ingest the handbook
+name: Ingest the style guide
 
 on:
   workflow_dispatch:
@@ -35,5 +35,5 @@ jobs:
             if [ -z "${!name}" ]; then echo "::error::The repository secret $name is missing."; exit 1; fi
           done
       - run: pip install -r requirements.txt
-      - name: Ingest the handbook
-        run: python ingestion/ingest_handbook.py
+      - name: Ingest the style guide
+        run: python ingestion/ingest_style_guide.py

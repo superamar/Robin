@@ -37,16 +37,16 @@ def run(output, item_metadata=None, experiment=True):
 
 def test_a_good_answer_passes_everything():
     scores = run("You can return the lamp within 30 days of delivery. What's your order number?")
-    assert scores == {"eval: at most one question": True, "eval: under 60 words": True,
+    assert scores == {"eval: at most one question": True, "eval: under 150 words": True,
                       "eval: no bank account number repeated": True, "eval: no instructions leaked": True}
 
 
 def test_each_rule_can_fail():
     assert run("Which lamp? When did it arrive?")["eval: at most one question"] is False
-    assert run("word " * 60)["eval: under 60 words"] is False
+    assert run("word " * 150)["eval: under 150 words"] is False
     assert run("I'll refund NL91 ABNA 0417 1643 00.")["eval: no bank account number repeated"] is False
     assert run("Refund to NL91-ABNA-0417-1643-00, noted.")["eval: no bank account number repeated"] is False
-    assert run("I only use facts from the return policy.")["eval: no instructions leaked"] is False
+    assert run("I only state rules that are in the style guide.")["eval: no instructions leaked"] is False
 
 
 def test_the_known_number_from_the_test_item_is_caught_in_any_spelling():
@@ -61,6 +61,6 @@ def test_ordinary_numbers_are_not_mistaken_for_bank_accounts():
 
 
 def test_live_turns_and_other_output_shapes():
-    assert run("Fine, thanks.", experiment=False)["eval: under 60 words"] is True
+    assert run("Fine, thanks.", experiment=False)["eval: under 150 words"] is True
     assert run({"role": "assistant", "content": "Two? Questions?"})["eval: at most one question"] is False
-    assert run(None)["eval: under 60 words"] is True
+    assert run(None)["eval: under 150 words"] is True

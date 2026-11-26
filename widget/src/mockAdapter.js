@@ -1,52 +1,52 @@
-// Scripted answers for the mockup. Later, this adapter is replaced by one that calls Robin's API.
-// The answers follow Robin's system prompt and return policy, so the mockup behaves like the real bot.
+// Scripted answers for the mockup. Later, this adapter is replaced by one that calls Penny's API.
+// The answers follow Penny's system prompt and the style guide, so the mockup behaves like the real bot.
 
 const IBAN = /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}(?:\s?[A-Z0-9]{1,4})?\b/i;
 
 const SCRIPT = [
   {
     test: (t) => /ignore|forget your|instructions|system prompt|vergeet je regels|negeer/i.test(t),
-    en: "I'm sorry, I can't help with that. Do you have a question about an order, a return or a complaint? I'm happy to help.",
-    nl: "Daar kan ik je helaas niet mee helpen. Heb je een vraag over een bestelling, een retour of een klacht? Dan help ik je graag.",
+    en: "I can't help with that. I can answer questions about the 1Password writing style guide, or review copy against it. What are you working on?",
+    nl: "Daarmee kan ik je niet helpen. Ik beantwoord vragen over de schrijfstijlgids van 1Password, of controleer teksten ermee. Waar werk je aan?",
   },
   {
-    test: (t) => IBAN.test(t),
-    en: "Thanks. Refunds always go back to the payment method you used, so I don't need a bank account number. What's your order number?",
-    nl: "Dank je. Een terugbetaling gaat altijd terug naar de betaalmethode die je hebt gebruikt, dus een rekeningnummer heb ik niet nodig. Wat is je bestelnummer?",
+    test: (t) => /oops|couldn't save|please try/i.test(t),
+    en: "Three things to fix. \"We couldn't save\" uses \"we\", which implies a person is present – the guide doesn't allow first person plural in UI copy. \"Oops!\" adds emotion and an exclamation point, and \"Please\" isn't needed in instructions. Try: \"The item couldn't be saved. Try again.\"",
+    nl: "Drie dingen om aan te passen: \"we\" hoort niet in UI-teksten, \"Oops!\" voegt emotie en een uitroepteken toe, en \"please\" is niet nodig in instructies. Probeer: \"The item couldn't be saved. Try again.\"",
   },
   {
-    test: (t) => /curtain|made-to-measure|op maat|gordijn/i.test(t),
-    en: "I'm sorry your curtains arrived damaged. Made-to-measure products normally can't be returned, but our policy doesn't say what happens when they arrive damaged. Shall I pass this to a colleague who can look at it?",
-    nl: "Wat vervelend dat je gordijnen beschadigd zijn aangekomen. Producten op maat kun je normaal niet retourneren, maar ons beleid zegt niet wat er gebeurt als ze beschadigd aankomen. Zal ik dit doorgeven aan een collega?",
+    test: (t) => /log ?in|sign ?in|inloggen/i.test(t),
+    en: "Use \"sign in\". \"Sign in to\" a website or service, and \"sign in on\" a device. The guide reserves \"log in\" for Mac and Windows system accounts.",
+    nl: "Gebruik \"sign in\": \"sign in to\" een website of dienst, en \"sign in on\" een apparaat. \"Log in\" is alleen voor Mac- en Windows-systeemaccounts.",
   },
   {
-    test: (t) => /voucher|compensation|tegoedbon|vergoeding|late|te laat/i.test(t),
-    en: "I'm sorry your delivery is late again, I understand that's frustrating. I can't offer a voucher, but I can log a complaint for you. What's your order number?",
-    nl: "Wat vervelend dat je bestelling weer te laat is. Een tegoedbon kan ik helaas niet geven, maar ik kan wel een klacht voor je registreren. Wat is je bestelnummer?",
+    test: (t) => /dash|streepje/i.test(t),
+    en: "Use a spaced en dash ( – ) to separate phrases, not an em dash or a hyphen. Try: \"Encrypted at rest and in transit – just like the other apps.\"",
+    nl: "Gebruik een en dash met spaties ( – ) om zinsdelen te scheiden, geen em dash of koppelteken.",
   },
   {
-    test: (t) => /\b(\d+|five|six|vijf|zes)\s*(weeks|weken)\b/i.test(t),
-    en: "Thanks for checking. You can return products within 30 days of delivery, so after 5 weeks the return window has unfortunately passed. Shall I pass your question to a colleague to see what's possible?",
-    nl: "Fijn dat je het even checkt. Je kunt producten binnen 30 dagen na levering retourneren, dus na 5 weken is die termijn helaas voorbij. Zal ik je vraag doorgeven aan een collega om te kijken wat er kan?",
+    test: (t) => /passkey/i.test(t),
+    en: "\"Passkey\" is one word, lowercase. People save a passkey or sign in with a passkey. Don't use \"fill\" with passkeys.",
+    nl: "\"Passkey\" is één woord, met een kleine letter. Mensen bewaren een passkey of loggen ermee in. Gebruik \"fill\" niet bij passkeys.",
   },
   {
-    test: (t) => /return|refund|send (it )?back|retour|terugsturen|terugbetal/i.test(t),
-    en: "You can return products within 30 days of delivery, as long as they're unused and in their original packaging. Returns cost €4.95, which is deducted from your refund. What's your order number?",
-    nl: "Je kunt producten binnen 30 dagen na levering retourneren, als ze ongebruikt zijn en in de originele verpakking zitten. Een retour kost €4,95, die we van je terugbetaling aftrekken. Wat is je bestelnummer?",
+    test: (t) => /click|tap|klik/i.test(t),
+    en: "Use \"select\" instead of \"click\" or \"tap\" – it works on every device. Use \"choose\" when someone picks from several options. Try: \"Select Settings.\"",
+    nl: "Gebruik \"select\" in plaats van \"click\" of \"tap\": dat werkt op elk apparaat. Probeer: \"Select Settings.\"",
   },
   {
     test: (t) => /weather|weer|recipe|recept|homework|huiswerk/i.test(t),
-    en: "I can only help with orders, returns and complaints. Is there anything I can do for you there?",
-    nl: "Ik kan je alleen helpen met bestellingen, retouren en klachten. Kan ik daar iets voor je doen?",
+    en: "I can only help with writing for 1Password. Is there copy you're working on?",
+    nl: "Ik help alleen met schrijven voor 1Password. Werk je aan een tekst?",
   },
 ];
 
 const DEFAULT = {
-  en: "I can help with orders, returns and complaints. Could you tell me a bit more, for example your order number?",
-  nl: "Ik help je graag met bestellingen, retouren en klachten. Kun je me iets meer vertellen, bijvoorbeeld je bestelnummer?",
+  en: "I can answer style questions or review copy. Paste the copy, and tell me where it appears, such as a button, an error, or onboarding.",
+  nl: "Ik beantwoord stijlvragen of controleer teksten. Plak de tekst, en vertel waar hij staat, bijvoorbeeld een knop, een foutmelding of onboarding.",
 };
 
-const DUTCH = /\b(ik|je|jij|mijn|het|een|niet|wil|kan|bestelling|graag|dank|hoe|wat|waarom)\b/i;
+const DUTCH = /\b(ik|je|jij|mijn|het|een|niet|wil|kan|tekst|graag|dank|hoe|wat|waarom)\b/i;
 
 function pickAnswer(text) {
   const lang = DUTCH.test(text) ? "nl" : "en";
@@ -63,7 +63,7 @@ const wait = (ms, signal) =>
     });
   });
 
-export const mockRobinAdapter = {
+export const mockPennyAdapter = {
   async *run({ messages, abortSignal }) {
     const last = messages.at(-1);
     const text = (last?.content ?? [])
@@ -73,7 +73,7 @@ export const mockRobinAdapter = {
     const answer = pickAnswer(text);
     const masked = IBAN.test(text);
 
-    await wait(700, abortSignal); // Robin "thinks" (in the real bot: guardrails + the model)
+    await wait(700, abortSignal); // Penny "thinks" (in the real bot: guardrails + the model)
     const words = answer.split(" ");
     let shown = "";
     for (const word of words) {

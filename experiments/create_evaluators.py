@@ -1,4 +1,4 @@
-"""Create Robin's LLM-as-a-Judge evaluators in Langfuse, from the prompts in EVALUATORS.md.
+"""Create Penny's LLM-as-a-Judge evaluators in Langfuse, from the prompts in EVALUATORS.md.
 
     python experiments/create_evaluators.py            # create the evaluators and rules
     python experiments/create_evaluators.py --dry-run  # only show what would be created
@@ -8,8 +8,8 @@ evaluators in Langfuse always match the file. Evaluators and rules that already 
 are left alone, so running this twice is safe.
 
 Two rules are created:
-- "Robin – experiments" (on): runs the experiment evaluators on every new run of robin-experiment.
-- "Robin – live chats" (off): the same evaluators for Robin's chat turns. Switch it on in Langfuse
+- "Penny – experiments" (on): runs the experiment evaluators on every new run of penny-experiment.
+- "Penny – live chats" (off): the same evaluators for Penny's chat turns. Switch it on in Langfuse
   when you want live scoring; every judgement is a paid model call.
 
 Uses LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_BASE_URL from .env or the environment.
@@ -49,7 +49,7 @@ from langfuse.api.evaluators.types.create_evaluator_request import CreateEvaluat
 from langfuse.api.evaluators.types.evaluator_model_config import EvaluatorModelConfig  # noqa: E402
 
 EVALUATORS_FILE = ROOT / "EVALUATORS.md"
-DATASET = "robin-experiment"
+DATASET = "penny-experiment"
 JUDGE_MODEL = os.getenv("JUDGE_MODEL", "gpt-6-luna")
 
 # Which evaluators each rule uses. Names as in EVALUATORS.md.
@@ -58,7 +58,8 @@ EXPERIMENT_EVALS = [
     "eval: short answer",
     "eval: no bank account number repeated",
     "eval: no instructions leaked",
-    "eval: only facts from the policy",
+    "eval: only rules from the style guide",
+    "eval: no false flags",
     "eval: matches the good answer",
 ]
 LIVE_EVALS = [
@@ -66,8 +67,10 @@ LIVE_EVALS = [
     "eval: short answer",
     "eval: no bank account number repeated",
     "eval: no instructions leaked",
-    "eval: only facts from the policy",
-    "eval: clear next step",
+    "eval: only rules from the style guide",
+    "eval: rewrite offered",
+    "eval: no false flags",
+    "eval: Penny follows the guide",
     "eval: natural language",
 ]
 SOURCES = {"input": "input", "output": "output", "expected_output": "expected_output"}
@@ -130,7 +133,7 @@ def build_requests(prompts: dict[str, str], model) -> dict[str, CreateEvaluatorR
     for name, prompt in prompts.items():
         requests[name] = CreateEvaluatorRequest_LlmAsJudge(
             name=name,
-            description="Robin, the Nest & Co chatbot. Prompt from EVALUATORS.md in github.com/convocat/Robin.",
+            description="Penny, the 1Password writing style assistant. Prompt from EVALUATORS.md in the Penny repo.",
             prompt=prompt,
             model_config_=model,
             variable_mapping=mapping_for(prompt),
@@ -158,8 +161,8 @@ def main() -> None:
     if args.dry_run:
         for name, request in requests.items():
             print(f"- {name}: variables {', '.join(variables_of(request.prompt))}")
-        print(f"Rules: 'Robin – experiments' ({len(EXPERIMENT_EVALS)} evaluators, on), "
-              f"'Robin – live chats' ({len(LIVE_EVALS)} evaluators, off)")
+        print(f"Rules: 'Penny – experiments' ({len(EXPERIMENT_EVALS)} evaluators, on), "
+              f"'Penny – live chats' ({len(LIVE_EVALS)} evaluators, off)")
         return
 
     # 1. Evaluators (skip names that already exist)
@@ -186,32 +189,32 @@ def main() -> None:
             result.append(EvaluationRuleEvaluatorAssignmentInput(evaluator_id=ids[n], variable_mapping=mapping))
         return result
 
-    if "Robin – experiments" in rules:
-        print("Exists, left as it is: rule Robin – experiments")
+    if "Penny – experiments" in rules:
+        print("Exists, left as it is: rule Penny – experiments")
     else:
         langfuse.api.evaluation_rules.create(
-            name="Robin – experiments", enabled=True, sampling=1.0,
+            name="Penny – experiments", enabled=True, sampling=1.0,
             filter=[
                 EvaluationRuleFilter_Boolean(column="isExperimentItemRootSpan", operator="=", value=True),
                 EvaluationRuleFilter_StringOptions(column="datasetId", operator="any of", value=[dataset_id]),
             ],
             evaluator_assignments=assignments(EXPERIMENT_EVALS),
         )
-        print(f"Created rule: Robin – experiments ({len(EXPERIMENT_EVALS)} evaluators, on)")
+        print(f"Created rule: Penny – experiments ({len(EXPERIMENT_EVALS)} evaluators, on)")
 
-    if "Robin – live chats" in rules:
-        print("Exists, left as it is: rule Robin – live chats")
+    if "Penny – live chats" in rules:
+        print("Exists, left as it is: rule Penny – live chats")
     else:
         langfuse.api.evaluation_rules.create(
-            name="Robin – live chats", enabled=False, sampling=1.0,
+            name="Penny – live chats", enabled=False, sampling=1.0,
             filter=[
-                EvaluationRuleFilter_StringOptions(column="name", operator="any of", value=["Robin – chat turn"]),
+                EvaluationRuleFilter_StringOptions(column="name", operator="any of", value=["Penny – chat turn"]),
                 EvaluationRuleFilter_Boolean(column="isRootObservation", operator="=", value=True),
-                EvaluationRuleFilter_StringOptions(column="environment", operator="any of", value=["course"]),
+                EvaluationRuleFilter_StringOptions(column="environment", operator="any of", value=["pilot"]),
             ],
             evaluator_assignments=assignments(LIVE_EVALS, drop_expected=True),
         )
-        print(f"Created rule: Robin – live chats ({len(LIVE_EVALS)} evaluators, off: switch it on in Langfuse)")
+        print(f"Created rule: Penny – live chats ({len(LIVE_EVALS)} evaluators, off: switch it on in Langfuse)")
 
 
 if __name__ == "__main__":

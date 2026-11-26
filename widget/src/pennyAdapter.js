@@ -1,11 +1,11 @@
-// Connects the widget to Robin's API (/api/chat). The conversation lives in the browser;
-// every request sends the history, and the API returns Robin's answer plus the Langfuse trace ID.
+// Connects the widget to Penny's API (/api/chat). The conversation lives in the browser;
+// every request sends the history, and the API returns Penny's answer plus the Langfuse trace ID.
 
 const ERRORS = {
-  passcode: "Please open Course settings (bottom left) and enter the course passcode first.",
-  name: "Please open Course settings (bottom left) and enter your first name or a nickname first.",
+  passcode: "To start, open Settings (bottom left) and enter the passcode.",
+  name: "To start, open Settings (bottom left) and enter your first name or a nickname.",
   limit: "This chat has reached its message limit. Start a new conversation to continue.",
-  generic: "Sorry, something went wrong on my side. Could you try again in a moment?",
+  generic: "Something went wrong on my side. Try again in a moment.",
 };
 
 const textOf = (message) =>
@@ -14,7 +14,7 @@ const textOf = (message) =>
     .map((part) => part.text)
     .join("\n");
 
-export function createRobinAdapter(getSettings) {
+export function createPennyAdapter(getSettings) {
   return {
     async run({ messages, abortSignal }) {
       const { name, passcode, model, effort, sessionId, guardrails, lookUp, maxResults, promptLabel } = getSettings();
@@ -55,7 +55,7 @@ export function createRobinAdapter(getSettings) {
   };
 }
 
-export const robinFeedbackAdapter = {
+export const pennyFeedbackAdapter = {
   submit({ message, type }) {
     const traceId = message?.metadata?.custom?.traceId;
     if (!traceId) return;

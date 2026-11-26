@@ -1,20 +1,20 @@
-"""The ingestion pipeline: put the Nest & Co customer handbook into Robin's content database.
+"""The ingestion pipeline: put the 1Password writing style guide into Penny's content database.
 
-This is the bottom row of the course slide "DocBot: from question to answer":
+This is the ingestion half of a classic RAG pipeline:
 
-    1. Get the handbook       the 'production' version of the prompt robin/handbook in Langfuse
-                              (or content/handbook.md if Langfuse can't be reached)
+    1. Get the style guide    the 'production' version of the prompt penny/style-guide in Langfuse
+                              (or content/style-guide.md if Langfuse can't be reached)
     2. Preprocess             tidy the text: line endings, trailing spaces, extra blank lines
     3. Chunk                  cut it into chunks: one per section (## heading)
     4. Embed                  turn every chunk into an embedding with OpenAI
     5. Store                  replace the old chunks in the content database (Postgres with pgvector)
 
-It runs separately from Robin: start it under Actions > "Ingest the handbook" whenever the handbook
-changes. Robin itself only searches the database. The run shows up in Langfuse as one trace,
-"Ingestion – customer handbook", in the environment "ingestion".
+It runs separately from Penny: start it under Actions > "Ingest the style guide" whenever the style guide
+changes. Penny itself only searches the database. The run shows up in Langfuse as one trace,
+"Ingestion – style guide", in the environment "ingestion".
 
-Run it locally with:  python ingestion/ingest_handbook.py
-It needs OPENAI_API_KEY and DATABASE_URL, and the Langfuse keys to read the handbook from Langfuse.
+Run it locally with:  python ingestion/ingest_style_guide.py
+It needs OPENAI_API_KEY and DATABASE_URL, and the Langfuse keys to read the style guide from Langfuse.
 """
 
 from __future__ import annotations
@@ -36,19 +36,19 @@ from openai import OpenAI  # noqa: E402
 
 import lookup  # noqa: E402
 import prompts  # noqa: E402
-import robin  # noqa: E402
+import penny  # noqa: E402
 
 
-def get_handbook() -> tuple[str, str]:
-    """The handbook text and where it came from."""
+def get_style_guide() -> tuple[str, str]:
+    """The style guide text and where it came from."""
     if os.getenv("LANGFUSE_PUBLIC_KEY"):
-        robin.seed_prompts()  # creates robin/handbook from content/handbook.md if it isn't in Langfuse yet
+        penny.seed_prompts()  # creates penny/style-guide from content/style-guide.md if it isn't in Langfuse yet
         try:
-            prompt = get_client().get_prompt("robin/handbook", label="production", cache_ttl_seconds=0)
-            return prompt.prompt, f"Langfuse prompt robin/handbook, version {prompt.version}"
+            prompt = get_client().get_prompt("penny/style-guide", label="production", cache_ttl_seconds=0)
+            return prompt.prompt, f"Langfuse prompt penny/style-guide, version {prompt.version}"
         except Exception as error:
-            print(f"Could not read robin/handbook from Langfuse ({error}); using content/handbook.md")
-    return prompts.HANDBOOK, "content/handbook.md in the repository"
+            print(f"Could not read penny/style-guide from Langfuse ({error}); using content/style-guide.md")
+    return prompts.STYLE_GUIDE, "content/style-guide.md in the repository"
 
 
 def preprocess(text: str) -> str:
@@ -60,20 +60,20 @@ def preprocess(text: str) -> str:
 def main(client=None) -> int:
     client = client or OpenAI()
     langfuse = get_client()
-    with langfuse.start_as_current_observation(as_type="chain", name="Ingestion – customer handbook") as run:
-        with langfuse.start_as_current_observation(as_type="span", name="1. Get the handbook") as step:
-            handbook, source = get_handbook()
-            step.update(output=f"{len(handbook)} characters", metadata={"source": source})
-        print(f"1. Got the handbook from {source}.")
+    with langfuse.start_as_current_observation(as_type="chain", name="Ingestion – style guide") as run:
+        with langfuse.start_as_current_observation(as_type="span", name="1. Get the style guide") as step:
+            guide, source = get_style_guide()
+            step.update(output=f"{len(guide)} characters", metadata={"source": source})
+        print(f"1. Got the style guide from {source}.")
 
-        with langfuse.start_as_current_observation(as_type="span", name="2. Preprocess", input=handbook) as step:
-            handbook = preprocess(handbook)
-            code, version = lookup.document_info(handbook)
-            step.update(output=handbook, metadata={"document_code": code, "document_version": version})
+        with langfuse.start_as_current_observation(as_type="span", name="2. Preprocess", input=guide) as step:
+            guide = preprocess(guide)
+            code, version = lookup.document_info(guide)
+            step.update(output=guide, metadata={"document_code": code, "document_version": version})
         print(f"2. Preprocessed {code}, version {version}.")
 
         with langfuse.start_as_current_observation(as_type="span", name="3. Chunk") as step:
-            chunks = lookup.split_into_chunks(handbook)
+            chunks = lookup.split_into_chunks(guide)
             step.update(output=[{"chunk": n, "section": c.section, "characters": len(c.text), "text": c.text}
                                 for n, c in enumerate(chunks, start=1)],
                         metadata={"rule": "one chunk per section (## heading)", "chunks": len(chunks)})

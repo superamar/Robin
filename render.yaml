@@ -1,9 +1,9 @@
-# Render Blueprint for Robin. Used by the "Deploy to Render" button in the README.
-# Robin also runs on Vercel (see vercel.json); Vercel ignores this file.
+# Render Blueprint for Penny. Used by the "Deploy to Render" button in the README.
+# Penny also runs on Vercel (see vercel.json); Vercel ignores this file.
 # Render asks for every value marked `sync: false` when you create the service.
 services:
   - type: web
-    name: robin
+    name: penny
     runtime: python
     plan: free            # sleeps after 15 minutes without visitors; switch to "starter" to keep it awake
     region: frankfurt     # Render's EU region
@@ -21,9 +21,9 @@ services:
         sync: false
       - key: LANGFUSE_BASE_URL
         value: https://cloud.langfuse.com
-      - key: COURSE_PASSCODE
+      - key: ACCESS_PASSCODE
         sync: false
-      - key: ROBIN_MODEL
+      - key: PENNY_MODEL
         value: gpt-6-sol
       - key: COMPARE_MODEL
         value: gpt-4.1-mini
@@ -34,4 +34,4 @@ services:
       - key: MAX_MESSAGES_PER_CHAT
         value: "40"
       - key: LANGFUSE_TRACING_ENVIRONMENT
-        value: course
+        value: pilot

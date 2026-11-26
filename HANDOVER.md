@@ -1,28 +1,35 @@
-# Robin — session handover
+# Penny — session handover
 
-*Written by the `robin-handover` skill. Each run replaces this file — it's a snapshot of where
+*Written by the `penny-backlog` skill. Each run replaces this file — it's a snapshot of where
 things stand, not a log. For history, see `BACKLOG.md`'s Done section or `git log`.*
 
-## Where things stand (2026-11-16)
+## Where things stand (2026-11-26)
 
-Robin is cloned locally at this repo, connected to the real Langfuse project and the real Render
-Postgres for look-up (RAG). The local Flask server and the new `dashboard-kit/` dashboard are
-both runnable via their skills (`robin-dashboard`).
+Penny was adapted from Robin in this session. Everything that was about the Nest & Co shop is now
+about the 1Password writing style guide:
 
-Langfuse tracing, the 51-item experiment set (look-up on, guardrails on/off), and the Product
-Owner / conversation-log dashboard were all verified working end to end tonight.
+- Prompts (`prompts.py`): Penny's role, the style essentials, guardrails and fallbacks. Langfuse
+  prompt names moved from `robin/…` to `penny/…`, so a Langfuse project that ran Robin gets a fresh
+  set of `penny/…` prompts on Penny's first run.
+- Content: `content/style-guide.md`, starter content condensed from the public guide, one `##`
+  section per rule. The shop's handbook, product guide and FAQ are gone.
+- Look-up: table `style_guide_chunks`, workflow "Ingest the style guide".
+- Page and widget rebuilt (`public/index.html`). Guardrails are now on by default.
+- Test set: 41 new items in `experiments/penny-dataset.json`. Judge prompts in `EVALUATORS.md`.
+- Settings renamed: `ROBIN_MODEL` → `PENNY_MODEL`, `COURSE_PASSCODE` → `ACCESS_PASSCODE`, tracing
+  environment `course` → `pilot`.
+
+The offline tests pass (`python -m pytest tests`). Penny hasn't run against real OpenAI and
+Langfuse keys yet: no keys in the cloud session where it was adapted.
 
 ## What's not done
 
-See `BACKLOG.md` → Open. The two most concrete ones: the handbook's free-shipping number
-contradicts itself (€50 vs €75), and Robin has no real answer when a customer asks for a human.
+See `BACKLOG.md` → Open. The first two: the team's own chunked content, and the hosting decision
+(AWS Bedrock) with engineering.
 
 ## Handy facts for whoever picks this up
 
-- Local venv: `.venv/` (Python). Node deps for the dashboard's thread view:
-  `dashboard-kit/thread-view/node_modules/` (run `npm install` there if missing).
-- `.env` has real `OPENAI_API_KEY`, `LANGFUSE_*` and `DATABASE_URL` — never commit it.
-- `dashboard-kit/dashboard-data.json` is generated from Langfuse (`robin_adapter.py`) and
-  gitignored on purpose: it holds real course participants' messages.
-- A throwaway local Postgres+pgvector Docker container (`robin-pgvector`) is still running from
-  before the real Render database was wired in. Safe to stop; nothing depends on it anymore.
+- `.env` holds the real keys. Never commit it. Copy `.env.example` and fill it in; note the
+  renamed settings above.
+- `dashboard-kit/dashboard-data.json` is generated from Langfuse and gitignored on purpose: it holds
+  real people's messages.

@@ -1,10 +1,10 @@
 """Builds dashboard-data.json for the dashboard-kit (originally from Mai Montferland),
-adapted for Robin: pulls real course chats from Langfuse (environment "course",
-"Robin - chat turn" traces), groups them into conversations by sessionId, and
-classifies topics for Nest & Co instead of a municipality.
+adapted for Penny: pulls real pilot chats from Langfuse (environment "pilot",
+"Penny - chat turn" traces), groups them into conversations by sessionId, and
+classifies topics for Penny (1Password writing style) instead of a municipality.
 
-Run from the Robin project root with its .env loaded:
-    python dashboard-kit/robin_adapter.py
+Run from the Penny project root with its .env loaded:
+    python dashboard-kit/penny_adapter.py
 """
 from __future__ import annotations
 
@@ -31,29 +31,31 @@ BASE = os.environ["LANGFUSE_BASE_URL"]
 AUTH = base64.b64encode(f"{PUB}:{SEC}".encode()).decode()
 FROM_TS = "2020-01-01T00:00:00Z"
 
-TOPIC_KEYWORDS = {
-    "Returns": ["return", "refund", "retour", "money back"],
-    "Shipping & delivery": ["shipping", "deliver", "ship ", "delivery", "parcel", "courier"],
-    "Order & payment": ["order", "payment", "pay", "invoice", "ideal", "klarna", "paypal", "voucher", "gift card"],
-    "Damaged or faulty": ["damaged", "broken", "faulty", "defect"],
+TOPIC_KEYWORDS = {  # first match wins, so the most specific topics come first
+    "Prompt injection attempt": ["ignore your", "pretend", "jailbreak", "debug mode", "system prompt",
+                                 "your instructions", "forget the style guide"],
+    "Copy review": ["review", "check this", "is this ok", "feedback on", "does this follow"],
+    "Terminology": ["sign in", "log in", "login", "passkey", "2fa", "two-factor", "autofill", "fill",
+                    "secret key", "watchtower", "vault", "user", "generate", "enable", "click", "tap", "select"],
+    "Mechanics": ["dash", "comma", "capital", "header", "title case", "abbreviation", "e.g.", "i.e.",
+                  "quotation", "list", "link text", "spelling"],
+    "Voice and tone": ["tone", "voice", "exclamation", "please", "sorry", "apolog", "we ", "our ",
+                       "blame", "should", "just", "simply", "contraction"],
     "Bank account / IBAN": ["iban", "bank account", "rekeningnummer"],
-    "Prompt injection attempt": ["ignore", "pretend", "dan", "jailbreak", "debug mode", "system prompt",
-                                 "instructions", "pirate"],
-    "Wants a human": ["human", "real person", "colleague", "human agent"],
-    "Product care & styling": ["care", "clean", "vacuum", "wood", "sofa", "rug", "styling"],
-    "About Robin itself": ["are you", "chatbot", "robin", "ai assistant"],
+    "Wants a human": ["human", "real person", "content design team", "colleague"],
+    "About Penny itself": ["are you", "chatbot", "penny", "ai assistant"],
 }
 
 
 SECTION_HIT = re.compile(r"([^,(]+?)\s*\(([\d.]+)\)")
 
 
-def load_handbook_snippets() -> dict[str, str]:
+def load_style_guide_snippets() -> dict[str, str]:
     """Section heading -> first ~160 characters of its body, for the Bronnen panel.
 
-    Mirrors how lookup.split_into_chunks cuts content/handbook.md: one chunk per '## ' heading.
+    Mirrors how lookup.split_into_chunks cuts content/style-guide.md: one chunk per '## ' heading.
     """
-    text = (ROOT / "content" / "handbook.md").read_text(encoding="utf-8")
+    text = (ROOT / "content" / "style-guide.md").read_text(encoding="utf-8")
     snippets = {}
     for heading, body in re.findall(r"^##[ \t]+([^\n]+)\n([\s\S]*?)(?=\n##[ \t]|\Z)", text, re.M):
         clean = re.sub(r"\s+", " ", body).strip()
@@ -61,19 +63,19 @@ def load_handbook_snippets() -> dict[str, str]:
     return snippets
 
 
-HANDBOOK_SNIPPETS = load_handbook_snippets()
+STYLE_GUIDE_SNIPPETS = load_style_guide_snippets()
 
 
 def parse_sections_found(text: str | None) -> list[dict]:
     """'Product care (0.327), Returns (0.3)' -> [{'section': ..., 'similarity': 0.327, 'snippet': ...}, ...].
 
-    robin.py writes `sections_found` into trace metadata whenever look-up (RAG) ran.
+    penny.py writes `sections_found` into trace metadata whenever look-up (RAG) ran.
     """
     if not text:
         return []
     return [
         {"section": m.group(1).strip(), "similarity": float(m.group(2)),
-         "snippet": HANDBOOK_SNIPPETS.get(m.group(1).strip(), "")}
+         "snippet": STYLE_GUIDE_SNIPPETS.get(m.group(1).strip(), "")}
         for m in SECTION_HIT.finditer(text)
     ]
 
@@ -114,7 +116,7 @@ def fetch_all_traces() -> list[dict]:
     traces, page = [], 1
     while True:
         d = _get("/api/public/traces", limit=100, page=page, fromTimestamp=FROM_TS,
-                  name="Robin – chat turn", environment="course")
+                  name="Penny – chat turn", environment="pilot")
         traces.extend(d["data"])
         if page >= d["meta"]["totalPages"]:
             break
@@ -128,7 +130,7 @@ def fetch_feedback_scores() -> dict[str, list[dict]]:
     page = 1
     while True:
         d = _get("/api/public/scores", limit=100, page=page, fromTimestamp=FROM_TS,
-                  name="user feedback", environment="course")
+                  name="user feedback", environment="pilot")
         for s in d["data"]:
             scores_by_trace[s["traceId"]].append(s)
         if page >= d["meta"]["totalPages"]:
@@ -191,9 +193,9 @@ def build_conv_log(traces: list[dict], scores_by_trace: dict[str, list[dict]]) -
             "thumbs": {"positive": positive, "negative": negative} if (positive or negative) else None,
             "preview": (first_user["content"][:120] if first_user else ""),
             "messages": messages,
-            # Extra fields beyond the base contract, for Robin's own course context.
+            # Extra fields beyond the base contract, for Penny's own context.
             "userId": last_turn.get("userId"),
-            "models": sorted({(t.get("metadata") or {}).get("robin_model") for t in turns if t.get("metadata")}),
+            "models": sorted({(t.get("metadata") or {}).get("penny_model") for t in turns if t.get("metadata")}),
             "guardrailsOff": sorted({(t.get("metadata") or {}).get("guardrails_switched_off") for t in turns
                                      if t.get("metadata")}),
             "lookUp": sorted({(t.get("metadata") or {}).get("look_up") for t in turns if t.get("metadata")}),

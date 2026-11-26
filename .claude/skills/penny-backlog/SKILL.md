@@ -1,9 +1,9 @@
 ---
-name: robin-backlog
-description: "Maintain this repo's backlog (BACKLOG.md) and write a session handover (HANDOVER.md). Two routines in one small skill: backlog keeps Open/In progress/Done current; handover snapshots where things stand for whoever picks this up next. Triggers: '/robin-backlog', 'what's open', 'update the backlog', 'add to the backlog', 'handover', 'hand this off', 'wrap up this session'."
+name: penny-backlog
+description: "Maintain this repo's backlog (BACKLOG.md) and write a session handover (HANDOVER.md). Two routines in one small skill: backlog keeps Open/In progress/Done current; handover snapshots where things stand for whoever picks this up next. Triggers: '/penny-backlog', 'what's open', 'update the backlog', 'add to the backlog', 'handover', 'hand this off', 'wrap up this session'."
 ---
 
-# robin-backlog — backlog and handover for this repo
+# penny-backlog — backlog and handover for this repo
 
 Two small, related routines. Figure out which one the request wants before acting: a question
 about open work, or a request to log/close/add an item, is the **backlog** routine; a request to
@@ -20,7 +20,7 @@ targeted — don't rewrite the whole file for a one-line change.
 - **"Add to the backlog"** — append one bullet under Open, written the way the existing bullets
   are written (bold lead-in, then one or two sentences of why/what). Don't invent urgency or
   priority that wasn't stated.
-- **A settled use case from `robin-usecase-discovery`** — one bullet, naming the build task, pointing
+- **A settled use case from `penny-usecase-discovery`** — one bullet, naming the build task, pointing
   at its doc: `**<task>.** See `discovery/<slug>.md` for the settled design.` Don't copy the
   analysis into the backlog line; the doc is the source of truth, the backlog line is just a
   pointer to it.
